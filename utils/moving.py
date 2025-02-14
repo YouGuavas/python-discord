@@ -24,19 +24,20 @@ async def move(url, channel, character, direction=None, position=None):
             await channel["message"].send("Error: No valid move command provided.")
             return
         # Make request (replace with actual request logic)
-        if not data['current_room']:
-            response = await requests.get(f'{url}ajax_changeroomb?serverid={character['server_id']}&suid={character['character_id']}&rg_sess_id={character['session']}')["data"]
-            print('response: ' + response)
-            data['current_room'] = response.curRoom
-            data['north'] = response.north
-            data['south'] = response.south
-            data['east'] = response.east
-            data['west'] = response.west
+        if not 'current_room' in data:
+            response = requests.get(f'{url}ajax_changeroomb.php?serverid={character['server_id']}&suid={character['character_id']}&rg_sess_id={character['session']['session']}').json()
+            data['current_room'] = response['curRoom']
+            data['north'] = response['north']
+            data['south'] = response['south']
+            data['east'] = response['east']
+            data['west'] = response['west']
+            await channel["message"].send(f'Current room updated: {data['current_room']}')
         #await channel["message"].send(data)
         if data['north']:
-            move_to = data["move"]
-            #print(move_to)
-            response = await requests.get(f'{url}ajax_changeroomb?serverid={character['server_id']}&suid={character['character_id']}&rg_sess_id={character['session']}&room={data[data['move']]}&lastroom={data['current_room']}')
+            move = data["move"]
+            move_to = data[move]
+            print(f'{move_to}')
+            response = requests.get(f'{url}ajax_changeroomb?serverid={character['server_id']}&suid={character['character_id']}&rg_sess_id={character['session']['session']}&room={move_to}&lastroom={data['current_room']}')
         if response["success"]:
             await channel["message"].send(f"Move successful: {response['message']}")
         else:

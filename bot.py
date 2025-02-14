@@ -5,10 +5,13 @@ from config import TOKEN
 import asyncio
 from discord.ext import commands
 from cogs.load_cogs import load_cogs
+
+
 import ssl
 import certifi
 
 ssl_context = ssl.create_default_context(cafile=certifi.where())
+
 
 # Set bot command prefix and intents
 intents = discord.Intents.default()
