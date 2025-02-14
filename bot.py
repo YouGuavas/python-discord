@@ -1,6 +1,6 @@
 import discord
-from dotenv import load_dotenv
-import os
+
+from config import TOKEN
 
 import asyncio
 from discord.ext import commands
@@ -9,11 +9,6 @@ import ssl
 import certifi
 
 ssl_context = ssl.create_default_context(cafile=certifi.where())
-
-
-# Load environment variables
-load_dotenv()
-TOKEN = os.getenv("DISCORD_TOKEN")
 
 # Set bot command prefix and intents
 intents = discord.Intents.default()
