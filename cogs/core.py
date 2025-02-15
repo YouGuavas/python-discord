@@ -1,5 +1,6 @@
 from utils.login import login 
 from utils.moving import move 
+from utils.attacking import attack_by_names
 
 from discord.ext import commands
 
@@ -34,6 +35,12 @@ class Login(commands.Cog):
     @commands.command()
     async def west(self, ctx):
         await move(BASE, {"message": ctx}, {"character_id": CHECKER, "server_id": SERVERID, "session": self.rg_sess}, direction="west")
+
+    #Attacking Commands
+    @commands.command()
+    async def attack(self, ctx, *mob_names):
+        await attack_by_names(BASE, {"message": ctx}, {"character_id": CHECKER, "server_id": SERVERID, "session": self.rg_sess}, mob_names)
+
 # Use an async function to properly load the cog
 async def setup(bot):
     await bot.add_cog(Login(bot))  #Await this
