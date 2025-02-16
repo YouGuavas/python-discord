@@ -36,8 +36,9 @@ async def move(url, channel, character, direction=None, position=None):
         if data['north']:
             move = data["move"]
             move_to = data[move]
-            print(f'{move_to}')
-            response = requests.get(f'{url}ajax_changeroomb?serverid={character['server_id']}&suid={character['character_id']}&rg_sess_id={character['session']['session']}&room={move_to}&lastroom={data['current_room']}')
+            #print(f'{move_to}')
+            response = requests.get(f'{url}ajax_changeroomb?serverid={character['server_id']}&suid={character['character_id']}&rg_sess_id={character['session']['session']}&room={move_to}&lastroom={data['current_room']}').json()
+            #print(f'response: {response}')
         if response["success"]:
             await channel["message"].send(f"Move successful: {response['message']}")
         else:

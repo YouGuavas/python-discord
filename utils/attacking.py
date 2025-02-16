@@ -1,5 +1,7 @@
 import requests
 from urllib.parse import urlencode
+from utils.moving import move 
+
 
 async def attack_by_names(url, channel, character, mob_names=[]):
     try:
@@ -11,8 +13,6 @@ async def attack_by_names(url, channel, character, mob_names=[]):
             if mob["name"]:
                 if mob["name"].lower() in mob_name_string:
                     await attack(url, channel, character, mob)
-                else:
-                    await channel["message"].reply("That mob is not in this room.")
             else:
                 pass
     except Exception as e:
@@ -23,11 +23,15 @@ async def attack_by_names(url, channel, character, mob_names=[]):
 async def attack(url, channel, character, mob):
     try:
         data = await get_mob_data(url, channel, character, mob)
+        new_results = []
         #This is the attack page
         attack_data = requests.get(f'{url}somethingelse.php?serverid={character['server_id']}&suid={character['character_id']}&rg_sess_id={character['session']['session']}&{data}').text
+        if "Found" in attack_data:
+            found_item = attack_data.split('Found ')[1].split('</b>')[0]
+            #new_results.append(f"{found_item}")
+            await channel["message"].reply(f"Found {found_item}")
         won = attack_data.split('var successful = ')[1].split(';')[0]
         results = attack_data.split('battle_result = "')[1].split('"')[0].split("gained")
-        new_results = []
         for result in results:
             result = result.split('<br>')[0]
             if '!' in result:
@@ -37,14 +41,21 @@ async def attack(url, channel, character, mob):
             new_results.append(result)
         await channel["message"].reply(f"Attacking {mob["name"]}.")
         if won == '1':
-            await channel["message"].reply(f"Won against {mob["name"]}.")
-            await channel["message"].reply(f"Results: {', '.join(new_results)}")
+            pass
+            #await channel["message"].reply(f"Won against {mob["name"]}. \nResults: {', '.join(new_results[1:])}")
         else:
             await channel["message"].reply(f"Failed to defeat {mob["name"]}.")
     except Exception as e:
         print(e)
         if "message" in channel:
             await channel["message"].reply("There was an error with the attacking process. Check your logs.")
+
+async def attack_in_a_line(url, channel, character, mob_names, loops, direction): 
+            counter = 0
+            while counter < int(loops):
+                await move(url, {"message": channel["message"]}, {"character_id": character["character_id"], "server_id": character["server_id"], "session": character["session"]["session"]}, direction=direction)
+                await attack_by_names(url, {"message": channel["message"]}, {"character_id": character["character_id"], "server_id": character["server_id"], "session": character["session"]}, mob_names)
+                counter += 1
 
 async def get_mob_data(url, channel, character, mob):
     try:

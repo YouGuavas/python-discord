@@ -1,6 +1,6 @@
 from utils.login import login 
 from utils.moving import move 
-from utils.attacking import attack_by_names
+from utils.attacking import attack_by_names, attack_in_a_line
 
 from discord.ext import commands
 
@@ -40,6 +40,18 @@ class Login(commands.Cog):
     @commands.command()
     async def attack(self, ctx, *mob_names):
         await attack_by_names(BASE, {"message": ctx}, {"character_id": CHECKER, "server_id": SERVERID, "session": self.rg_sess}, mob_names)
+    @commands.command()
+    async def potshot(self, ctx, loops, direction, *mob_names):
+        if int(loops):
+            await attack_in_a_line(BASE, {"message": ctx}, {"character_id": CHECKER, "server_id": SERVERID, "session": self.rg_sess}, mob_names, loops, direction)
+            await ctx["message"].reply("Finished.")
+        else:
+            ctx["message"].reply("Please choose a number of loops.")
+    @commands.command()
+    async def orbs1(self, ctx, *mob_names):
+        await attack_in_a_line(BASE, {"message": ctx}, {"character_id": CHECKER, "server_id": SERVERID, "session": self.rg_sess}, mob_names, 14, "north")
+        self.east(self, ctx)
+        await attack_in_a_line(BASE, {"message": ctx}, {"character_id": CHECKER, "server_id": SERVERID, "session": self.rg_sess}, mob_names, 14, "south")
 
 # Use an async function to properly load the cog
 async def setup(bot):
