@@ -20,16 +20,20 @@ async def login(user, password, url, character, channel=None, cb=None):
         else:
             if cb:
                 response = await cb(user, password, url, channel, character)  # Ensure it's awaited
-        # Extract session ID from cookies
-        character["session"] = await get_sess(response, channel, character)
+        
         # Check login success
-        if "message" in channel:
-            if response.headers.get("Location", "") != "https://sigil.outwar.com/LE=1":
-                print(f"Successfully logged into rga: {user}, new session id: {character["session"]}.")
+        if response.headers.get("Location", "") != "https://sigil.outwar.com/LE=1":
+            print(f"Successfully logged into rga: {user}, new session id: {character["session"]}.")
+            if "message" in channel:
                 await channel["message"].reply(f"Successfully logged into rga: {user}, new session id: {character["session"]}.")
-            else:
-                print(f"Could not log into rga: {user}, check login info.")
+                
+                # Extract session ID from cookies
+            return get_sess(response, channel, character)
+        else:
+            print(f"Could not log into rga: {user}, check login info.")
+            if "message" in channel:
                 await channel["message"].reply(f"Could not log into rga: {user}, check login info.")
+            return
 
     except Exception as e:
         print(e)
@@ -45,8 +49,9 @@ async def get_sess(response, channel, character):
             for cookie in response.cookies:
                 if cookie.name == "rg_sess_id":
                     character["session"]["session"] = cookie.value
-                    await channel["message"].reply('session: '+character["session"]["session"])
-                    return character["session"]
+                    if "message" in channel:
+                        await channel["message"].reply('session: '+character["session"]["session"])
+                    return character["session"]["session"]
         except Exception as e:
             print(e)
             if "message" in channel:

@@ -6,10 +6,9 @@ from discord.ext import commands
 
 from config import OW_USERNAME, OW_PASSWORD, BASE, CHECKER, SERVERID
 
-class Main(commands.Cog):
+class Login(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.rg_sess = {}
 
     @commands.command()
     async def ping(self, ctx):
@@ -20,7 +19,7 @@ class Main(commands.Cog):
         await ctx.send(self.rg_sess)
     @commands.command()
     async def login(self, ctx):
-        await login(OW_USERNAME, OW_PASSWORD, BASE, {"session": self.rg_sess, "server_id": SERVERID, "character_id": CHECKER}, {"message": ctx}, login)
+        await login(OW_USERNAME, OW_PASSWORD, BASE, {"session": self.bot.rg_sess, "server_id": SERVERID, "character_id": CHECKER}, {"message": ctx}, login)
         await ctx.send("Login executed")
     
     #Moving Commands
@@ -60,4 +59,4 @@ class Main(commands.Cog):
 
 # Use an async function to properly load the cog
 async def setup(bot):
-    await bot.add_cog(Main(bot))  #Await this
+    await bot.add_cog(Login(bot))  #Await this

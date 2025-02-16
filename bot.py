@@ -1,6 +1,6 @@
 import discord
 
-from config import OW_USERNAME, OW_PASSWORD, BASE, CHECKER, SERVERID, TOKEN
+from config import OW_USERNAME, OW_PASSWORD, BASE, CHECKER, SERVERID, TOKEN, DISCORD_CHANNEL_ID
 
 import asyncio
 from discord.ext import commands
@@ -26,6 +26,14 @@ bot = commands.Bot(command_prefix="!", intents=intents)
 
 @bot.event
 async def on_ready():
+    # Send a message to the debug channel
+    #bot.rg_sess = await login(OW_USERNAME, OW_PASSWORD, BASE, {"session": {}}, None, login)
+
+    channel = bot.get_channel(DISCORD_CHANNEL_ID)
+    if channel:
+        await channel.send("✅ Bot started & logged into the game!")
+    else:
+        print("❌ Failed to find the debug channel. Check the ID.")
     print(f"Logged in as {bot.user}")
     create_tables()  # Ensures database is set up
     print("Database initialized!")
