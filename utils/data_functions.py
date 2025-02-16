@@ -6,17 +6,46 @@ async def log_data():
     return
 
 
-async def get_mob_data(url, channel, character, mob):
+async def get_attack_data(url, channel, character, mob):
     try:
         h = mob["h"]
         spawnId = mob["spawnId"]
         #This is the mob page
         world_mob_data = requests.get(f'{url}mob.php?serverid={character['server_id']}&suid={character['character_id']}&rg_sess_id={character['session']['session']}&h={h}&id={spawnId}')
         if world_mob_data.status_code == 200:
-            data = world_mob_data.text.split('somethingelse.php?')[1].split('"')[0]
+            data = world_mob_data.text.split('somethingelse.php?')[1].split('</table>')[0]
             #await channel["message"].reply(f"Successfully grabbed mob data for {mob["name"]}.")
             return data
     except Exception as e:
         print(e)
         if "message" in channel:
             await channel["message"].reply("There was an error grabbing mob data. Check your logs.")
+
+
+async def get_talk_data(url, channel, character, mob):
+    try:
+        h = mob["h"]
+        spawnId = mob["spawnId"]
+        data = []
+        #This is the mob page
+        world_mob_data = requests.get(f'{url}mob.php?serverid={character['server_id']}&suid={character['character_id']}&rg_sess_id={character['session']['session']}&h={h}&id={spawnId}')
+
+        if world_mob_data.status_code == 200:
+            raw_quests = world_mob_data.text.split('Available Quests')[1].split("</table>")[0].split('</b>')
+            for quest in raw_quests:
+                if 'mob_talk.php' in quest:
+                    name = quest.split('<b>')[-1]
+                    href = quest.split('href="mob_talk.php?')[1].split('"')[0]
+                    step_id = href.split('stepid=')[1].split('&')[0]
+                    quest_id = href.split('questid=')[1].split("'")[0]
+
+
+                    data.append({"name": name, "href": href, "step_id": step_id, "quest_id": quest_id})
+                #await channel["message"].reply(f"{name}")
+
+            await channel["message"].reply(f"Successfully grabbed talk data for {mob["name"]}.")
+            return data
+    except Exception as e:
+        print(e)
+        if "message" in channel:
+            await channel["message"].reply("There was an error grabbing talk data. Check your logs.")

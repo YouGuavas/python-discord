@@ -1,7 +1,7 @@
 import requests
 from urllib.parse import urlencode
 from utils.moving import move 
-from utils.data_functions import get_mob_data
+from utils.data_functions import get_attack_data
 
 
 async def attack_by_names(url, channel, character, mob_names=[]):
@@ -23,7 +23,7 @@ async def attack_by_names(url, channel, character, mob_names=[]):
 
 async def attack(url, channel, character, mob):
     try:
-        data = await get_mob_data(url, channel, character, mob)
+        data = await get_attack_data(url, channel, character, mob)
         new_results = []
         #This is the attack page
         attack_data = requests.get(f'{url}somethingelse.php?serverid={character['server_id']}&suid={character['character_id']}&rg_sess_id={character['session']['session']}&{data}').text
