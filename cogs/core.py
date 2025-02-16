@@ -6,20 +6,21 @@ from discord.ext import commands
 
 from config import OW_USERNAME, OW_PASSWORD, BASE, CHECKER, SERVERID
 
-class Login(commands.Cog):
+class Main(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.rg_sess = {}
 
     @commands.command()
     async def ping(self, ctx):
+        print(vars(ctx))
         await ctx.send("Pong!")
     @commands.command()
     async def sess(self, ctx):
         await ctx.send(self.rg_sess)
     @commands.command()
     async def login(self, ctx):
-        await login(OW_USERNAME, OW_PASSWORD, BASE, {"message": ctx}, {"session": self.rg_sess, "server_id": SERVERID, "character_id": CHECKER}, login)
+        await login(OW_USERNAME, OW_PASSWORD, BASE, {"session": self.rg_sess, "server_id": SERVERID, "character_id": CHECKER}, {"message": ctx}, login)
         await ctx.send("Login executed")
     
     #Moving Commands
@@ -43,7 +44,11 @@ class Login(commands.Cog):
     @commands.command()
     async def potshot(self, ctx, loops, direction, *mob_names):
         if int(loops):
-            await attack_in_a_line(BASE, {"message": ctx}, {"character_id": CHECKER, "server_id": SERVERID, "session": self.rg_sess}, mob_names, loops, direction)
+            counter = 0
+            while counter < int(loops):
+                await move(BASE, {"message": ctx}, {"character_id": CHECKER, "server_id": SERVERID, "session": self.rg_sess}, direction=direction)
+                await attack_by_names(BASE, {"message": ctx}, {"character_id": CHECKER, "server_id": SERVERID, "session": self.rg_sess}, mob_names)
+                counter += 1
             await ctx["message"].reply("Finished.")
         else:
             ctx["message"].reply("Please choose a number of loops.")
@@ -55,4 +60,4 @@ class Login(commands.Cog):
 
 # Use an async function to properly load the cog
 async def setup(bot):
-    await bot.add_cog(Login(bot))  #Await this
+    await bot.add_cog(Main(bot))  #Await this

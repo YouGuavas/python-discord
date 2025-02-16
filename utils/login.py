@@ -1,7 +1,7 @@
 import requests
 from urllib.parse import urlencode
 
-async def login(user, password, url, channel, character, cb=None):
+async def login(user, password, url, character, channel=None, cb=None):
     try:
         # Prepare login data
         data = {            
@@ -25,9 +25,11 @@ async def login(user, password, url, channel, character, cb=None):
         # Check login success
         if "message" in channel:
             if response.headers.get("Location", "") != "https://sigil.outwar.com/LE=1":
-                await channel["message"].reply(f"Successfully logged into rga: {user}, new session id: {character["session"]}")
+                print(f"Successfully logged into rga: {user}, new session id: {character["session"]}.")
+                await channel["message"].reply(f"Successfully logged into rga: {user}, new session id: {character["session"]}.")
             else:
-                await channel["message"].reply(f"Could not log into rga: {user}, check login info")
+                print(f"Could not log into rga: {user}, check login info.")
+                await channel["message"].reply(f"Could not log into rga: {user}, check login info.")
 
     except Exception as e:
         print(e)

@@ -1,10 +1,13 @@
 import discord
 
-from config import TOKEN
+from config import OW_USERNAME, OW_PASSWORD, BASE, CHECKER, SERVERID, TOKEN
 
 import asyncio
 from discord.ext import commands
 from cogs.load_cogs import load_cogs
+from utils.login import login
+from database import create_tables  # Import database functions
+
 
 
 import ssl
@@ -24,6 +27,8 @@ bot = commands.Bot(command_prefix="!", intents=intents)
 @bot.event
 async def on_ready():
     print(f"Logged in as {bot.user}")
+    create_tables()  # Ensures database is set up
+    print("Database initialized!")
     print("Loaded commands:", [command.name for command in bot.commands])
 
 async def main():
