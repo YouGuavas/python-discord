@@ -13,7 +13,7 @@ async def get_attack_data(url, channel, character, mob):
         #This is the mob page
         world_mob_data = requests.get(f'{url}mob.php?serverid={character['server_id']}&suid={character['character_id']}&rg_sess_id={character['session']['session']}&h={h}&id={spawnId}')
         if world_mob_data.status_code == 200:
-            data = world_mob_data.text.split('somethingelse.php?')[1].split('</table>')[0]
+            data = world_mob_data.text.split('somethingelse.php?')[1].split('"')[0]
             #await channel["message"].reply(f"Successfully grabbed mob data for {mob["name"]}.")
             return data
     except Exception as e:

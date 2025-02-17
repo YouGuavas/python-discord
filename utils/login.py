@@ -56,6 +56,7 @@ async def login(url, user, password, channel, character, cb=None):
             print(f"Successfully logged into rga: {user}, new session id: {session}.")
             if "message" in channel:
                 await channel["message"].reply(f"Successfully logged into rga: {user}, new session id: {session}.")
+                await channel["message"].reply(f"Play link: {url}home.php?serverid={character["server_id"]}&suid={character["character_id"]}&rg_sess_id={session}")
                 
                 # Extract session ID from cookies
             return session
