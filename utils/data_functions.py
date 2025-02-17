@@ -5,6 +5,10 @@ from urllib.parse import urlencode
 async def log_data():
     return
 
+async def get_room_data(url, channel, character):
+    room = requests.get(f'{url}ajax_changeroomb.php?serverid={character['server_id']}&suid={character['character_id']}&rg_sess_id={character['session']['session']}').json()
+    print(room)
+    return room
 
 async def get_attack_data(url, channel, character, mob):
     try:

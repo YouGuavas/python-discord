@@ -31,19 +31,41 @@ async def move(url, channel, character, direction=None, position=None):
             data['south'] = response['south']
             data['east'] = response['east']
             data['west'] = response['west']
-            await channel["message"].send(f'Current room updated: {data['current_room']}')
-        #await channel["message"].send(data)
-        if data['north']:
+
+        #allows us to inform user of incorrect moves
+        available_moves = []
+        for key in data.keys():
+            print(f'key: {key}')
+            if (key != 'move') and (key != 'current_room'): 
+                if data[key] != '0':
+                    available_moves.append(key)
+                
+
+        if len(available_moves) > 0:
+            print(available_moves)
             move = data["move"]
-            move_to = data[move]
-            #print(f'{move_to}')
-            response = requests.get(f'{url}ajax_changeroomb?serverid={character['server_id']}&suid={character['character_id']}&rg_sess_id={character['session']['session']}&room={move_to}&lastroom={data['current_room']}').json()
-            #print(f'response: {response}')
-        if response["success"]:
-            await channel["message"].send(f"Move successful: {response['message']}")
+            if move in available_moves:
+                move_to = data[move]
+                response = requests.get(f'{url}ajax_changeroomb?serverid={character['server_id']}&suid={character['character_id']}&rg_sess_id={character['session']['session']}&room={move_to}&lastroom={data['current_room']}').json()
+                if response["error"] == '':
+                    await channel["message"].send(f"Successfully moved to room: {move_to}")
+                else:
+                    await channel["message"].send(f"Failed to move {move}")
+            else:
+                await channel["message"].send(f"Please select a valid move direction. Moves available: {', '.join(available_moves)}")
+                return
         else:
-            await channel["message"].send(f"Move failed: {response['error']}")
+            print()
+            await channel["message"].reply("There was a grievous error with moving. Check your logs.")
+            return
+
+        if response["error"] == '':
+            await channel["message"].send(f"Move successful: {move}")
+            
+        else:
+            await channel["message"].send(f"Move failed: {move}")
+        return
     except Exception as e:
-            print(e)
+            print(f'error: {e}')
             if "message" in channel:
                 await channel["message"].reply("There was an error with moving. Check your logs.")
