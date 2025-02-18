@@ -41,16 +41,24 @@ async def room_data(channel, room):
 
 async def log_room(room, north, south, east, west, mobs):
     try:
-        db.add_room(room, north, south, east, west)
-        for mob in mobs:
-            try:
-                if 'noAttack' in mob.keys():
-                    db.add_mob(mob["name"], room, True)
-                else:
-                    db.add_mob(mob["name"], room, False)
-                print(f'Logged mob {mob["name"]} in room {room}.')
-            except Exception as e:
-                print(f'Error logging mob {mob["name"]} in room {room}. Error: {e}')
+        room_exists = db.get_room_from_db(room)
+        print(room_exists)
+        if not room_exists:
+            status = db.add_room(room, north, south, east, west)
+            if status:
+                for mob in mobs:
+                    try:
+                        if 'noAttack' in mob.keys():
+                            db.add_mob(mob["name"], room, True)
+                        else:
+                            db.add_mob(mob["name"], room, False)
+                        print(f'Logged mob {mob["name"]} in room {room}.')
+                    except Exception as e:
+                        print(f'Error logging mob {mob["name"]} in room {room}. Error: {e}')
+            else:
+                pass
+        else:
+            pass
     except Exception as e:
         print(f'Error logging room {room}. Error: {e}')
 
@@ -66,10 +74,12 @@ async def list_mobs(channel, quest_mobs, room=None):
         print(e)
         if "message" in channel:
             await channel["message"].reply("There was an error listing mobs. Check your logs.")
+
 async def get_mob_data(channel, quest_mob, name):
     try:
-        #list all mobs
-        #quest_mobs: boolean
+        #List Data for mob 'name'
+        #quest_mob: boolean
+        #name: string
         mob = db.get_mob(quest_mob, name)
         await channel["message"].reply(f"Mob details for {name}: {mob}")
     except Exception as e:

@@ -13,31 +13,49 @@ rg_sess = {}
 class Main(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+
     @commands.command()
+    #Ping
     async def ping(self, ctx):
         await ctx.send("Pong!")
+
     @commands.command()
+    #Create Tables
     async def create(self, ctx):
         await create_tables({"message": ctx})
+
     @commands.command()
+    #List Tables
     async def list(self, ctx):
         await list_tables({"message": ctx})
+
     @commands.command()
+    #List Rooms
     async def rooms(self, ctx):
         await list_rooms({"message": ctx})
+    
     @commands.command()
+    #Gets Room Data
     async def room_data(self, ctx, room):
         await room_data({"message": ctx}, room)
+
     @commands.command()
+    #Gets Quest Mobs
     async def quest_mobs(self, ctx):
         await list_mobs({"message": ctx}, True)
+    
     @commands.command()
+    #Gets Normal Mobs
     async def mobs(self, ctx, room=None):
         await list_mobs({"message": ctx}, False, room)
+    
     @commands.command()
+    #Gets Mob Data -- broken
     async def mob(self, ctx, name):
         await get_mob_data({"message": ctx}, False, name)
+    
     @commands.command()
+    #Gets Quest Mob Data -- broken
     async def quest_mob(self, ctx, name):
         await get_mob_data({"message": ctx}, True, name)
 
