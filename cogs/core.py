@@ -2,7 +2,7 @@ from utils.login import login, logout
 from utils.moving import move, gorganus 
 from utils.attacking import attack_by_names, attack_in_a_line
 from utils.questing import talk_by_name
-from utils.data_functions import get_room_data, create_tables, list_tables
+from utils.data_functions import get_room_data, create_tables, list_tables, list_rooms, room_data, list_mobs
 from utils.raid import raid_by_name
 
 from discord.ext import commands
@@ -21,6 +21,18 @@ class Main(commands.Cog):
     @commands.command()
     async def list(self, ctx):
         await list_tables({"message": ctx})
+    @commands.command()
+    async def rooms(self, ctx):
+        await list_rooms({"message": ctx})
+    @commands.command()
+    async def room_data(self, ctx, room):
+        await room_data({"message": ctx}, room)
+    @commands.command()
+    async def quest_mobs(self, ctx):
+        await list_mobs({"message": ctx}, True)
+    @commands.command()
+    async def mobs(self, ctx, room=None):
+        await list_mobs({"message": ctx}, False, room)
     
 
 class Login(commands.Cog):
@@ -55,13 +67,13 @@ class Moving(commands.Cog):
     '''@commands.command()
     async def raid(self, ctx, former, god_name):
         chars = ["113468", "113466", "185325", "110591", "115544", "106621", "106622", "106623", "113464"]
-        await raid_by_name(BASE, {"message": ctx}, {"character_id": former, "server_id": SERVERID, "session": rg_sess}, god_name, chars)
+        await raid_by_name(BASE, {"message": ctx}, {"character_id": former, "server_id": SERVERID, "session": rg_sess}, god_name, chars)'''
 
     @commands.command()
     async def gorganus(self, ctx):
-        chars = ["113468", "113466", "185325", "110591", "115544", "106621", "106622", "106623", "113464"]
+        chars = ["93021", "113469", "113375", "113468", "93023"]#"113468", "113466", "185325", "110591", "115544", "106621", "106622", "106623", "113464"]
         for char in chars:
-            await gorganus(BASE, {"message": ctx}, {"character_id": char, "server_id": SERVERID, "session": rg_sess})'''
+            await gorganus(BASE, {"message": ctx}, {"character_id": char, "server_id": SERVERID, "session": rg_sess})
 class Attacking(commands.Cog):
     #Attacking Commands
     @commands.command()

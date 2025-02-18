@@ -10,6 +10,7 @@ async def create_tables(channel):
         print(e)
         if "message" in channel:
             await channel["message"].reply("There was an error creating tables. Check your logs.")
+
 async def list_tables(channel):
     try:
         tables = db.list_tables()
@@ -19,10 +20,55 @@ async def list_tables(channel):
         if "message" in channel:
             await channel["message"].reply("There was an error listing tables. Check your logs.")
 
-async def log_data():
-    return
+async def list_rooms(channel):
+    try:
+        rooms = db.list_rooms()
+        print(rooms)
+        #await channel["message"].send(rooms)
+    except Exception as e:
+        print(e)
+        if "message" in channel:
+            await channel["message"].reply("There was an error listing rooms. Check your logs.")
 
-async def get_room_data(url, character):
+async def room_data(channel, room):
+    try:
+        room = db.room_data(room)
+        await channel["message"].send(room)
+    except Exception as e:
+        print(e)
+        if "message" in channel:
+            await channel["message"].reply(f"There was an error finding date for {room}. Check your logs.")
+
+async def log_room(room, north, south, east, west, mobs):
+    try:
+        db.add_room(room, north, south, east, west)
+        for mob in mobs:
+            try:
+                if 'noAttack' in mob.keys():
+                    db.add_mob(mob["name"], room, True)
+                else:
+                    db.add_mob(mob["name"], room, False)
+                print(f'Logged mob {mob["name"]} in room {room}.')
+            except Exception as e:
+                print(f'Error logging mob {mob["name"]} in room {room}. Error: {e}')
+    except Exception as e:
+        print(f'Error logging room {room}. Error: {e}')
+
+async def list_mobs(channel, quest_mobs, room=None):
+    try:
+        #list all mobs
+        #quest_mobs: boolean
+        mobs = db.list_mobs(quest_mobs, room)
+        print(f"Mobs: {mobs}")
+        if room:
+            await channel["message"].reply(f"Mobs in room {room}: {mobs}")
+    except Exception as e:
+        print(e)
+        if "message" in channel:
+            await channel["message"].reply("There was an error listing mobs. Check your logs.")
+
+
+async def get_room_data(url, channel, character):
     room = requests.get(f'{url}ajax_changeroomb.php?serverid={character['server_id']}&suid={character['character_id']}&rg_sess_id={character['session']['session']}').json()
     data = {}
     available_moves = []
@@ -32,6 +78,9 @@ async def get_room_data(url, character):
     data['south'] = room['south']
     data['east'] = room['east']
     data['west'] = room['west']
+    
+    logged = await log_room(room['curRoom'], room['north'], room['south'], room['east'], room['west'], mobs)
+
     for key in data:
         if key !='current_room':
             if data[key] != '0':

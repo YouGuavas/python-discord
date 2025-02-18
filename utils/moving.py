@@ -78,7 +78,7 @@ async def move(url, channel, character, direction):
         if not character["session"]["session"]:
             await channel["message"].send("Error: Not logged in.")
             return
-        room_data = await get_room_data(url, character)
+        room_data = await get_room_data(url, channel, character)
         data = room_data["data"]
         available_moves = room_data["available_moves"]
 
@@ -90,10 +90,9 @@ async def move(url, channel, character, direction):
             if move in available_moves:
                 move_to = data[move]
                 requests.get(f'{url}ajax_changeroomb?serverid={character['server_id']}&suid={character['character_id']}&rg_sess_id={character['session']['session']}&room={move_to}&lastroom={data['current_room']}').json()
-                new_room = await get_room_data(url, character)
+                new_room = await get_room_data(url, channel, character)
                 next_moves = new_room["available_moves"]
                 
-                print(next_moves)
                 if new_room["error"] == '':
                     await channel["message"].send(f"Successfully moved to room: {move_to}. Avaialable moves: {', '.join(next_moves)}")
             else:
