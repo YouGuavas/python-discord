@@ -66,6 +66,16 @@ async def list_mobs(channel, quest_mobs, room=None):
         print(e)
         if "message" in channel:
             await channel["message"].reply("There was an error listing mobs. Check your logs.")
+async def get_mob_data(channel, quest_mob, name):
+    try:
+        #list all mobs
+        #quest_mobs: boolean
+        mob = db.get_mob(quest_mob, name)
+        await channel["message"].reply(f"Mob details for {name}: {mob}")
+    except Exception as e:
+        print(e)
+        if "message" in channel:
+            await channel["message"].reply(f"There was an error getting mob data for {name}. Check your logs.")
 
 
 async def get_room_data(url, channel, character):

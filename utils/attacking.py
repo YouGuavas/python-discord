@@ -24,23 +24,17 @@ async def attack_by_names(url, channel, character, mob_names=[]):
 async def attack(url, channel, character, mob):
     try:
         data = await get_attack_data(url, channel, character, mob)
-        print(data)
         new_results = []
         #This is the attack page
         attack_data = requests.get(f'{url}somethingelse.php?serverid={character['server_id']}&suid={character['character_id']}&rg_sess_id={character['session']['session']}&{data}').text
-        #print(attack_data)
         if "Found" in attack_data:
             found_item = attack_data.split('Found ')[1].split('</b>')[0]
             #new_results.append(f"{found_item}")
             await channel["message"].reply(f"Found {found_item}")
         won = attack_data.split('var successful = ')[1].split(';')[0]
-        print('1')
         results = attack_data.split('battle_result = "')[1].split('"')[0].split("gained")
-        print('2')
         for result in results:
-            print('result1')
             result = result.split('<br>')[0]
-            print('result2')
 
             if '!' in result:
                 result = result.split('!')[0]
@@ -58,7 +52,6 @@ async def attack(url, channel, character, mob):
         print(e)
         if "message" in channel:
             await channel["message"].reply("There was an error with the attacking process. Check your logs.")
-
 async def attack_in_a_line(url, channel, character, mob_names, loops, direction): 
             counter = 0
             while counter < int(loops):

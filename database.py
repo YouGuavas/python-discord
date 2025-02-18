@@ -84,14 +84,14 @@ def list_mobs(quest_mobs, room=None):
     conn, cursor = connect_db()
     if room: 
         if quest_mobs:
-            res = cursor.execute(f"SELECT name, room FROM quest_mobs WHERE room = {room}")
+            res = cursor.execute(f"SELECT name FROM quest_mobs WHERE room = {room}")
         else:
-            res = cursor.execute(f"SELECT name, room FROM mobs WHERE room = {room}")
+            res = cursor.execute(f"SELECT name FROM mobs WHERE room = {room}")
     else:
         if quest_mobs:
-            res = cursor.execute(f"SELECT name, room FROM quest_mobs")
+            res = cursor.execute(f"SELECT name FROM quest_mobs")
         else:
-            res = cursor.execute(f"SELECT name, room FROM mobs")
+            res = cursor.execute(f"SELECT name FROM mobs")
     mobs = res.fetchall()
     conn.close()
     return mobs
@@ -141,6 +141,26 @@ def add_mob(name, room, quest_mob):
         conn.commit()
     except sqlite3.IntegrityError:
         print(f"Mob {name} already exists.")
+    
+    conn.close()
+
+def get_mob(quest_mob, name):
+    conn, cursor = connect_db()
+    
+    try:
+        if not quest_mob:
+            print(f"Grabbing mob: {name}.")
+            cursor.execute(f"SELECT * FROM mobs WHERE name = (?)", (name))
+            print(f"Mob {name} grabbed.")
+        else:
+            print(f"Grabbing quest mob: {name}.")
+            cursor.execute(f"SELECT name, room FROM quest_mobs WHERE name = (?)", (name))
+            print(f"Quest mob {name} grabbed.")
+
+        conn.commit()
+
+    except sqlite3.IntegrityError:
+        print(f"Could not find mob {name}.")
     
     conn.close()
 def log_action(username, action):

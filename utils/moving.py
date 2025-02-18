@@ -59,7 +59,7 @@ async def gorganus(url, channel, character):
             i += 1
     
     
-    channel["message"].send("Arrived")
+    await channel["message"].send("Arrived")
     
     
 
@@ -92,8 +92,9 @@ async def move(url, channel, character, direction):
                 requests.get(f'{url}ajax_changeroomb?serverid={character['server_id']}&suid={character['character_id']}&rg_sess_id={character['session']['session']}&room={move_to}&lastroom={data['current_room']}').json()
                 new_room = await get_room_data(url, channel, character)
                 next_moves = new_room["available_moves"]
-                
-                if new_room["error"] == '':
+                if "error" in new_room.keys():
+                    await channel["message"].send(f"Failed to move to room: {move_to}. Please try again.")
+                if new_room:
                     await channel["message"].send(f"Successfully moved to room: {move_to}. Avaialable moves: {', '.join(next_moves)}")
             else:
                 await channel["message"].send(f"Failed to move {move}. Please select a valid move direction. Moves available: {', '.join(available_moves)}")

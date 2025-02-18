@@ -1,8 +1,9 @@
 from utils.login import login, logout 
 from utils.moving import move, gorganus 
 from utils.attacking import attack_by_names, attack_in_a_line
+from utils.runs import alsayic, astral
 from utils.questing import talk_by_name
-from utils.data_functions import get_room_data, create_tables, list_tables, list_rooms, room_data, list_mobs
+from utils.data_functions import get_room_data, create_tables, list_tables, list_rooms, room_data, list_mobs, get_mob_data
 from utils.raid import raid_by_name
 
 from discord.ext import commands
@@ -33,6 +34,13 @@ class Main(commands.Cog):
     @commands.command()
     async def mobs(self, ctx, room=None):
         await list_mobs({"message": ctx}, False, room)
+    @commands.command()
+    async def mob(self, ctx, name):
+        await get_mob_data({"message": ctx}, False, name)
+    @commands.command()
+    async def quest_mob(self, ctx, name):
+        await get_mob_data({"message": ctx}, True, name)
+
     
 
 class Login(commands.Cog):
@@ -70,8 +78,20 @@ class Moving(commands.Cog):
         await raid_by_name(BASE, {"message": ctx}, {"character_id": former, "server_id": SERVERID, "session": rg_sess}, god_name, chars)'''
 
     @commands.command()
+    async def astral(self, ctx):
+        chars = ["93021"]
+        for char in chars:
+            await astral(BASE, {"message": ctx}, {"character_id": char, "server_id": SERVERID, "session": rg_sess}, ["Astral Servant"])
+
+    @commands.command()
+    async def alsayic(self, ctx):
+        chars = ["93021"]
+        for char in chars:
+            await alsayic(BASE, {"message": ctx}, {"character_id": char, "server_id": SERVERID, "session": rg_sess}, ["Keeper of the Alsayic Rune"])
+
+    @commands.command()
     async def gorganus(self, ctx):
-        chars = ["93021", "113469", "113375", "113468", "93023"]#"113468", "113466", "185325", "110591", "115544", "106621", "106622", "106623", "113464"]
+        chars = ["113474"]#"93021", "113469", "113375", "113468", "93023"]#"113468", "113466", "185325", "110591", "115544", "106621", "106622", "106623", "113464"]
         for char in chars:
             await gorganus(BASE, {"message": ctx}, {"character_id": char, "server_id": SERVERID, "session": rg_sess})
 class Attacking(commands.Cog):
