@@ -6,3 +6,4 @@ cogs/__pycache__*
 skills/__pycache__*
 moving/__pycache__*
 venv
+game_data.db

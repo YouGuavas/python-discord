@@ -1,8 +1,9 @@
 from utils.login import login, logout 
-from utils.moving import move 
+from utils.moving import move, gorganus 
 from utils.attacking import attack_by_names, attack_in_a_line
 from utils.questing import talk_by_name
-from utils.data_functions import get_room_data
+from utils.data_functions import get_room_data, create_tables, list_tables
+from utils.raid import raid_by_name
 
 from discord.ext import commands
 
@@ -14,6 +15,12 @@ class Main(commands.Cog):
     @commands.command()
     async def ping(self, ctx):
         await ctx.send("Pong!")
+    @commands.command()
+    async def create(self, ctx):
+        await create_tables({"message": ctx})
+    @commands.command()
+    async def list(self, ctx):
+        await list_tables({"message": ctx})
     
 
 class Login(commands.Cog):
@@ -45,7 +52,16 @@ class Moving(commands.Cog):
     @commands.command()
     async def west(self, ctx):
         await move(BASE, {"message": ctx}, {"character_id": CHECKER, "server_id": SERVERID, "session": rg_sess}, direction="west")
+    '''@commands.command()
+    async def raid(self, ctx, former, god_name):
+        chars = ["113468", "113466", "185325", "110591", "115544", "106621", "106622", "106623", "113464"]
+        await raid_by_name(BASE, {"message": ctx}, {"character_id": former, "server_id": SERVERID, "session": rg_sess}, god_name, chars)
 
+    @commands.command()
+    async def gorganus(self, ctx):
+        chars = ["113468", "113466", "185325", "110591", "115544", "106621", "106622", "106623", "113464"]
+        for char in chars:
+            await gorganus(BASE, {"message": ctx}, {"character_id": char, "server_id": SERVERID, "session": rg_sess})'''
 class Attacking(commands.Cog):
     #Attacking Commands
     @commands.command()

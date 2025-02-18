@@ -34,6 +34,14 @@ def create_tables():
 
     conn.commit()
     conn.close()
+def list_tables():
+    """Creates the necessary tables for the bot."""
+    conn, cursor = connect_db()
+
+    res = cursor.execute("SELECT name FROM sqlite_master")
+    tables = res.fetchall()
+    conn.close()
+    return tables
 
 def add_player(username):
     """Adds a new player if they don’t already exist."""

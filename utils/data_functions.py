@@ -1,14 +1,42 @@
 import requests
 from urllib.parse import urlencode
+import database as db
 
+async def create_tables(channel):
+    try:
+        db.create_tables()
+        await channel["message"].send("Table created!")
+    except Exception as e:
+        print(e)
+        if "message" in channel:
+            await channel["message"].reply("There was an error creating tables. Check your logs.")
+async def list_tables(channel):
+    try:
+        tables = db.list_tables()
+        await channel["message"].send(tables)
+    except Exception as e:
+        print(e)
+        if "message" in channel:
+            await channel["message"].reply("There was an error listing tables. Check your logs.")
 
 async def log_data():
     return
 
-async def get_room_data(url, channel, character):
+async def get_room_data(url, character):
     room = requests.get(f'{url}ajax_changeroomb.php?serverid={character['server_id']}&suid={character['character_id']}&rg_sess_id={character['session']['session']}').json()
-    print(room)
-    return room
+    data = {}
+    available_moves = []
+    mobs = room["roomDetailsNew"]
+    data['current_room'] = room['curRoom']
+    data['north'] = room['north']
+    data['south'] = room['south']
+    data['east'] = room['east']
+    data['west'] = room['west']
+    for key in data:
+        if key !='current_room':
+            if data[key] != '0':
+                available_moves.append(key)
+    return {"data": data, "available_moves":available_moves, "mobs": mobs}
 
 async def get_attack_data(url, channel, character, mob):
     try:
