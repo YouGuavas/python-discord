@@ -3,7 +3,9 @@ from utils.moving import move, gorganus
 from utils.attacking import attack_by_names, attack_in_a_line
 from utils.runs import alsayic, astral
 from utils.questing import talk_by_name
-from utils.data_functions import get_room_data, create_tables, list_tables, list_rooms, room_data, list_mobs, get_mob_data
+from utils.data_functions import get_room_data
+from utils.setting import create_tables
+from utils.getting import list_tables, list_rooms, room_data, list_mobs, get_mob_data
 from utils.raid import raid_by_name
 
 from discord.ext import commands

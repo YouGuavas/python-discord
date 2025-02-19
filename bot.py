@@ -5,7 +5,6 @@ from config import TOKEN, DISCORD_CHANNEL_ID
 import asyncio
 from discord.ext import commands
 from cogs.load_cogs import load_cogs
-from database import create_tables  # Import database functions
 
 
 

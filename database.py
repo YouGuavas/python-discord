@@ -2,6 +2,7 @@ import sqlite3
 
 DB_NAME = "game_data.db"
 
+#### MAIN ####
 def connect_db():
     """Establishes a database connection and returns the cursor & connection."""
     conn = sqlite3.connect(DB_NAME)
@@ -16,6 +17,7 @@ def update_table(table, column):
             ALTER TABLE IF EXISTS {table} ADD COLUMN {column}
                    ''')
     conn.close()
+
 
 def create_tables():
     """Creates the necessary tables for the bot."""
@@ -37,7 +39,6 @@ def create_tables():
         crew TEXT DEFAULT 'none'
     )
     ''')
-
     cursor.execute('''
     CREATE TABLE IF NOT EXISTS logs (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -47,7 +48,6 @@ def create_tables():
         FOREIGN KEY(username) REFERENCES players(username)
     )
     ''')
-
     cursor.execute('''
     CREATE TABLE IF NOT EXISTS rooms (
         id INTEGER,
@@ -58,7 +58,6 @@ def create_tables():
         west INTEGER
     )
     ''')
-
     cursor.execute('''
     CREATE TABLE IF NOT EXISTS mobs (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -67,7 +66,6 @@ def create_tables():
         FOREIGN KEY(room) REFERENCES rooms(room)
     )
     ''')
-
     cursor.execute('''
     CREATE TABLE IF NOT EXISTS quest_mobs (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -90,40 +88,12 @@ def list_tables():
     conn.close()
     return tables
 
-def list_rooms():
-    """Lists rooms for the bot."""
-    conn, cursor = connect_db()
 
-    res = cursor.execute("SELECT room FROM rooms")
-    rooms = res.fetchall()
-    conn.close()
-    return rooms
 
-def list_mobs(quest_mobs, room=None):
-    """Lists rooms for the bot."""
-    conn, cursor = connect_db()
-    if room: 
-        if quest_mobs:
-            res = cursor.execute(f"SELECT name,room FROM quest_mobs WHERE room = ?", (room,))
-        else:
-            res = cursor.execute(f"SELECT name,room FROM mobs WHERE room = ?", (room,))
-    else:
-        if quest_mobs:
-            res = cursor.execute(f"SELECT name, room FROM quest_mobs")
-        else:
-            res = cursor.execute(f"SELECT name, room FROM mobs")
-    mobs = res.fetchall()
-    conn.close()
-    return mobs
 
-def room_data(room):
-    """Lists tables for the bot."""
-    conn, cursor = connect_db()
 
-    res = cursor.execute(f"SELECT room, north, south, east, west FROM rooms WHERE room = ?", (room,))
-    room = res.fetchone()
-    conn.close()
-    return room
+
+##### PLAYERS ###########
 
 def add_player(username):
     """Adds a new player if they don’t already exist."""
@@ -136,17 +106,57 @@ def add_player(username):
         print(f"Player {username} already exists.")
     
     conn.close()
+
+
 def get_player(username):
     #Checks for player
     conn, cursor = connect_db()
     try:
         cursor.execute("SELECT username FROM players")
         conn.commit()
+
     except sqlite3.IntegrityError:
         print(f"Player {username} does not exist.")
     conn.close()
 
+
+
+
+
+##### ACTIONS ###########
+
+def log_action(username, action):
+    """Logs player actions (like movement, combat, etc.)."""
+    conn, cursor = connect_db()
+    cursor.execute("INSERT INTO logs (username, action) VALUES (?, ?)", (username, action))
+    conn.commit()
+    conn.close()
+
+
+
+
+
+
+##### ROOMS ###########
+
+def add_room(room, north, south, east, west):
+
+    conn, cursor = connect_db()
+    added = False
+    try:
+        status = cursor.execute("INSERT INTO rooms (room, north, south, east, west) VALUES (?, ?, ?, ?, ?)", (room, north, south, east, west))
+        conn.commit()
+        added = True
+
+    except sqlite3.IntegrityError:
+        print(f"Room {room} already exists.")
+        added = False
+    conn.close()
+    return added
+
+
 def get_room_from_db(room):
+    #Used as a status check
     conn, cursor = connect_db()
     exists = False
     try:
@@ -161,40 +171,36 @@ def get_room_from_db(room):
     conn.close()
     return exists
 
-def add_room(room, north, south, east, west):
-    conn, cursor = connect_db()
-    added = False
-    try:
-        status = cursor.execute("INSERT INTO rooms (room, north, south, east, west) VALUES (?, ?, ?, ?, ?)", (room, north, south, east, west))
-        conn.commit()
-        added = True
-    except sqlite3.IntegrityError:
-        print(f"Room {room} already exists.")
-        added = False
-    
-    conn.close()
-    return added
 
-def add_mob(name, room, quest_mob):
+def room_data(room):
+    #Lists DATA about room.
     conn, cursor = connect_db()
-    
-    try:
-        if not quest_mob:
-            cursor.execute("INSERT INTO mobs (name, room) VALUES (?, ?)", (name, room))
-            print(f"Mob {name} added.")
-        else:
-            cursor.execute("INSERT INTO quest_mobs (name, room) VALUES (?, ?)", (name, room))
-            print(f"Quest mob {name} added.")
 
-        conn.commit()
-    except sqlite3.IntegrityError:
-        print(f"Mob {name} already exists.")
-    
+    res = cursor.execute(f"SELECT room, north, south, east, west FROM rooms WHERE room = ?", (room,))
+    room = res.fetchone()
     conn.close()
+    return room
+
+
+def list_rooms():
+    """Lists rooms for the bot."""
+    conn, cursor = connect_db()
+
+    res = cursor.execute("SELECT room FROM rooms")
+    rooms = res.fetchall()
+
+    conn.close()
+    return rooms
+
+
+
+
+
+##### MOBS ###########
 
 def get_mob(quest_mob, name):
+
     conn, cursor = connect_db()
-    
     try:
         if not quest_mob:
             print(f"Grabbing mob: {name}.")
@@ -207,21 +213,49 @@ def get_mob(quest_mob, name):
             res = cursor.execute(f"SELECT name, room FROM quest_mobs WHERE name = ?", (name,))
             print(f"Quest mob {name} grabbed.")
             mob = res.fetchone()
-
         conn.commit()
-        
 
     except sqlite3.IntegrityError:
         print(f"Could not find mob {name}.")
-    
     conn.close()
     print(f"mob: {mob}")
     return mob
 
 
-def log_action(username, action):
-    """Logs player actions (like movement, combat, etc.)."""
+def add_mob(name, room, quest_mob):
+
     conn, cursor = connect_db()
-    cursor.execute("INSERT INTO logs (username, action) VALUES (?, ?)", (username, action))
-    conn.commit()
+    try:
+        if not quest_mob:
+            cursor.execute("INSERT INTO mobs (name, room) VALUES (?, ?)", (name, room))
+            print(f"Mob {name} added.")
+        
+        else:
+            cursor.execute("INSERT INTO quest_mobs (name, room) VALUES (?, ?)", (name, room))
+            print(f"Quest mob {name} added.")
+        conn.commit()
+
+    except sqlite3.IntegrityError:
+        print(f"Mob {name} already exists.")
     conn.close()
+
+
+def list_mobs(quest_mobs, room=None):
+    #Lists MOBS
+    conn, cursor = connect_db()
+    if room: 
+        if quest_mobs:
+            res = cursor.execute(f"SELECT name,room FROM quest_mobs WHERE room = ?", (room,))
+        
+        else:
+            res = cursor.execute(f"SELECT name,room FROM mobs WHERE room = ?", (room,))
+    
+    else:
+        if quest_mobs:
+            res = cursor.execute(f"SELECT name, room FROM quest_mobs")
+        
+        else:
+            res = cursor.execute(f"SELECT name, room FROM mobs")
+    mobs = res.fetchall()
+    conn.close()
+    return mobs
