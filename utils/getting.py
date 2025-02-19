@@ -28,8 +28,7 @@ async def room_data(channel, room):
 
     try:
         room = db.room_data(room)
-        await channel["message"].send(room)
-
+        return room
     except Exception as e:
         print(e)
         if "message" in channel:

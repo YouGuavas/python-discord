@@ -1,6 +1,9 @@
 import requests
+import heapq
+
 from urllib.parse import urlencode
 from utils.data_functions import get_room_data
+from utils.getting import room_data
 
 async def gorganus(url, channel, character):
     turns = [{"direction": "north", "steps": 10}, 
@@ -107,3 +110,41 @@ async def move(url, channel, character, direction):
             print(f'error: {e}')
             if "message" in channel:
                 await channel["message"].reply("There was an error with moving. Check your logs.")
+
+
+
+def heuristic(node, goal):
+    return 1.5 * (abs(goal[0] - node[0]) + abs(goal[1] - node[1]))  # Bias toward goal
+def get_neighbors(current, grid):
+    neighbors = room_data(current)
+    return [neighbors["north"], neighbors["south"], neighbors["east"], neighbors["west"]]
+def reconstruct_path(came_from, start, goal):
+    path = []
+    current = goal
+    while current != start:
+        path.append(current)
+        current = came_from[current]  # Move to the previous node
+    path.append(start)  # Add start node at the end
+    path.reverse()  # Reverse to get the correct order
+    return path
+
+def astar_pathfinding(start, goal, grid):
+    open_list = []
+    heapq.heappush(open_list, (0, start))
+    came_from = {}
+    cost_so_far = {start: 0}
+
+    while open_list:
+        _, current = heapq.heappop(open_list)
+        if current == goal:
+            break
+        
+        for next_node in get_neighbors(current, grid):
+            new_cost = cost_so_far[current] + 1
+            if next_node not in cost_so_far or new_cost < cost_so_far[next_node]:
+                cost_so_far[next_node] = new_cost
+                priority = new_cost + heuristic(next_node, goal)
+                heapq.heappush(open_list, (priority, next_node))
+                came_from[next_node] = current
+
+    return reconstruct_path(came_from, start, goal)

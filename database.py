@@ -1,11 +1,12 @@
 import sqlite3
 
-DB_NAME = "game_data.db"
-
+GAME_DB = "game_data.db"
+MAP_DB = "map_data.db"
+PLAYER_DB = "player_data.db"
 #### MAIN ####
-def connect_db():
+def connect_db(DB):
     """Establishes a database connection and returns the cursor & connection."""
-    conn = sqlite3.connect(DB_NAME)
+    conn = sqlite3.connect(DB)
     cursor = conn.cursor()
     return conn, cursor
 
@@ -18,10 +19,45 @@ def update_table(table, column):
                    ''')
     conn.close()
 
-
+def create_map_tables():
+    conn, cursor = connect_db(MAP_DB)
+    cursor.execute('''
+    CREATE TABLE IF NOT EXISTS rooms (
+        id INTEGER,
+        room INTEGER PRIMARY KEY,
+        north INTEGER,
+        south INTEGER,
+        east INTEGER,
+        west INTEGER,
+        map TEXT
+    )
+    ''')
+    cursor.execute('''
+    CREATE TABLE IF NOT EXISTS mobs (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT,
+        room INTEGER,
+        map TEXT,
+        FOREIGN KEY(room) REFERENCES rooms(room),
+        FOREIGN KEY(map) REFERENCES rooms(map)
+    )
+    ''')
+    cursor.execute('''
+    CREATE TABLE IF NOT EXISTS quest_mobs (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT UNIQUE,
+        room INTEGER,
+        map TEXT,
+        FOREIGN KEY(room) REFERENCES rooms(room),
+        FOREIGN KEY(map) REFERENCES rooms(map)
+    )
+    ''')
+    conn.commit()
+    conn.close()
+    
 def create_tables():
     """Creates the necessary tables for the bot."""
-    conn, cursor = connect_db()
+    conn, cursor = connect_db(PLAYER_DB)
 
     cursor.execute('''
     CREATE TABLE IF NOT EXISTS players (
@@ -48,40 +84,15 @@ def create_tables():
         FOREIGN KEY(username) REFERENCES players(username)
     )
     ''')
-    cursor.execute('''
-    CREATE TABLE IF NOT EXISTS rooms (
-        id INTEGER,
-        room INTEGER PRIMARY KEY,
-        north INTEGER,
-        south INTEGER,
-        east INTEGER,
-        west INTEGER
-    )
-    ''')
-    cursor.execute('''
-    CREATE TABLE IF NOT EXISTS mobs (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT,
-        room INTEGER,
-        FOREIGN KEY(room) REFERENCES rooms(room)
-    )
-    ''')
-    cursor.execute('''
-    CREATE TABLE IF NOT EXISTS quest_mobs (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT UNIQUE,
-        room INTEGER,
-        FOREIGN KEY(room) REFERENCES rooms(room)
-    )
-    ''')
+    
 
     conn.commit()
     conn.close()
 
 
-def list_tables():
+def list_tables(db):
     """Lists tables for the bot."""
-    conn, cursor = connect_db()
+    conn, cursor = connect_db(db)
 
     res = cursor.execute("SELECT name FROM sqlite_master")
     tables = res.fetchall()
@@ -97,7 +108,7 @@ def list_tables():
 
 def add_player(username):
     """Adds a new player if they don’t already exist."""
-    conn, cursor = connect_db()
+    conn, cursor = connect_db(PLAYER_DB)
 
     try:
         cursor.execute("INSERT INTO players (username) VALUES (?)", (username,))
@@ -144,7 +155,9 @@ def add_room(room, north, south, east, west):
     conn, cursor = connect_db()
     added = False
     try:
-        status = cursor.execute("INSERT INTO rooms (room, north, south, east, west) VALUES (?, ?, ?, ?, ?)", (room, north, south, east, west))
+        room_number = room["curRoom"]
+        map_name = room["name"]
+        status = cursor.execute("INSERT INTO rooms (room, north, south, east, west, map) VALUES (?, ?, ?, ?, ?, ?)", (room_number, north, south, east, west, map_name))
         conn.commit()
         added = True
 
@@ -160,7 +173,8 @@ def get_room_from_db(room):
     conn, cursor = connect_db()
     exists = False
     try:
-        rooms = cursor.execute("SELECT room FROM rooms WHERE room = ?", (room,))
+        room_number = room["curRoom"]
+        rooms = cursor.execute("SELECT map, room FROM rooms WHERE room = ?", (room_number,))
         conn.commit()
         if len(rooms.fetchall()) > 0:
             exists = True
@@ -186,7 +200,7 @@ def list_rooms():
     """Lists rooms for the bot."""
     conn, cursor = connect_db()
 
-    res = cursor.execute("SELECT room FROM rooms")
+    res = cursor.execute("SELECT map, room FROM rooms")
     rooms = res.fetchall()
 
     conn.close()
@@ -222,16 +236,16 @@ def get_mob(quest_mob, name):
     return mob
 
 
-def add_mob(name, room, quest_mob):
+def add_mob(name, room, map, quest_mob):
 
     conn, cursor = connect_db()
     try:
         if not quest_mob:
-            cursor.execute("INSERT INTO mobs (name, room) VALUES (?, ?)", (name, room))
+            cursor.execute("INSERT INTO mobs (name, room, map) VALUES (?, ?, ?)", (name, room, map))
             print(f"Mob {name} added.")
         
         else:
-            cursor.execute("INSERT INTO quest_mobs (name, room) VALUES (?, ?)", (name, room))
+            cursor.execute("INSERT INTO quest_mobs (name, room, map) VALUES (?, ?, ?)", (name, room, map))
             print(f"Quest mob {name} added.")
         conn.commit()
 

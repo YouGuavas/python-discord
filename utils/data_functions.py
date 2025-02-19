@@ -13,8 +13,9 @@ async def get_room_data(url, channel, character):
     data['south'] = room['south']
     data['east'] = room['east']
     data['west'] = room['west']
+    data['map'] = room['name']
     
-    logged = await log_room(room['curRoom'], room['north'], room['south'], room['east'], room['west'], mobs)
+    logged = await log_room({"curRoom": room['curRoom'], "name": room['name']}, room['north'], room['south'], room['east'], room['west'], mobs)
 
     for key in data:
         if key !='current_room':

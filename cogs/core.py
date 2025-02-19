@@ -1,6 +1,6 @@
 from utils.login import login, logout 
 from utils.moving import move, gorganus 
-from utils.attacking import attack_by_names, attack_in_a_line
+from utils.attacking import attack_by_names, attack_in_a_line, spam_attack
 from utils.runs import alsayic, astral
 from utils.questing import talk_by_name
 from utils.data_functions import get_room_data
@@ -99,7 +99,7 @@ class Moving(commands.Cog):
 
     @commands.command()
     async def astral(self, ctx):
-        chars = ["93021"]
+        chars = ["113375", "113469", "113468"]
         for char in chars:
             await astral(BASE, {"message": ctx}, {"character_id": char, "server_id": SERVERID, "session": rg_sess}, ["Astral Servant"])
 
@@ -119,6 +119,9 @@ class Attacking(commands.Cog):
     @commands.command()
     async def attack(self, ctx, *mob_names):
         await attack_by_names(BASE, {"message": ctx}, {"character_id": CHECKER, "server_id": SERVERID, "session": rg_sess}, mob_names)
+    @commands.command()
+    async def zerx(self, ctx, loops):
+        await spam_attack(BASE, {"message": ctx}, {"character_id": CHECKER, "server_id": SERVERID, "session": rg_sess}, ["Zerx, Gladiator Titan"], int(loops))
     @commands.command()
     async def potshot(self, ctx, loops, direction, *mob_names):
         if int(loops):

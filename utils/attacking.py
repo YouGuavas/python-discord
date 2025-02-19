@@ -41,7 +41,7 @@ async def attack(url, channel, character, mob):
             if '</b>' in result:
                 result = result.split('</b>')[1]
             new_results.append(result)
-        await channel["message"].reply(f"Attacking {mob["name"]}.")
+        #await channel["message"].reply(f"Attacking {mob["name"]}.")
         
         if won == '1':
             pass
@@ -52,6 +52,14 @@ async def attack(url, channel, character, mob):
         print(e)
         if "message" in channel:
             await channel["message"].reply("There was an error with the attacking process. Check your logs.")
+
+
+async def spam_attack(url, channel, character, mob_names, loops):
+    counter = 0
+    while counter < int(loops):
+        await attack_by_names(url, {"message": channel["message"]}, {"character_id": character["character_id"], "server_id": character["server_id"], "session": character["session"]}, mob_names)
+        counter += 1
+
 async def attack_in_a_line(url, channel, character, mob_names, loops, direction): 
             counter = 0
             while counter < int(loops):
