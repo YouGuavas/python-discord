@@ -5,66 +5,15 @@ from urllib.parse import urlencode
 from utils.data_functions import get_room_data
 from utils.getting import room_data
 
-async def gorganus(url, channel, character):
-    turns = [{"direction": "north", "steps": 10}, 
-             {"direction": "west", "steps": 5},
-             {"direction": "north", "steps": 2},
-             {"direction": "west", "steps": 4},
-             {"direction": "north", "steps": 3},
-             {"direction": "west", "steps": 3},
-             {"direction": "north", "steps": 3},
-             {"direction": "west", "steps": 1},
-             {"direction": "north", "steps": 2},
-             {"direction": "west", "steps": 2},
-             {"direction": "north", "steps": 4},
-             {"direction": "east", "steps": 1},
-             {"direction": "north", "steps": 1},
-             {"direction": "east", "steps": 1},
-             {"direction": "north", "steps": 2},
-             {"direction": "east", "steps": 1},
-             {"direction": "north", "steps": 5},
-             {"direction": "west", "steps": 1},
-             {"direction": "north", "steps": 3},
-             {"direction": "west", "steps": 1},
-             {"direction": "north", "steps": 2},
-             {"direction": "west", "steps": 1},
-             {"direction": "north", "steps": 3},
-             {"direction": "west", "steps": 3},
-             {"direction": "north", "steps": 1},
-             {"direction": "west", "steps": 1},
-             {"direction": "north", "steps": 3},
-             {"direction": "west", "steps": 3},
-             {"direction": "south", "steps": 1},
-             {"direction": "west", "steps": 2},
-             {"direction": "south", "steps": 1},
-             {"direction": "west", "steps": 1},
-             {"direction": "south", "steps": 1},
-             {"direction": "west", "steps": 3},
-             {"direction": "north", "steps": 3},
-             {"direction": "west", "steps": 4},
-             {"direction": "south", "steps": 2},
-             {"direction": "west", "steps": 3},
-             {"direction": "north", "steps": 1},
-             {"direction": "west", "steps": 1},
-             {"direction": "north", "steps": 2},
-             {"direction": "east", "steps": 1},
-             {"direction": "north", "steps": 5},
-             {"direction": "east", "steps": 1},
+async def move_to_room(url, channel, character, current, new):
+    try:
+        current_room = await room_data(current)
+        print(current_room)
+    except Exception as e:
+            print(f'error: {e}')
+            if "message" in channel:
+                await channel["message"].reply("There was an error with moving. Check your logs.")
 
-
-
-
-             ]
-    for turn in turns:
-        i = 0 
-        while i < turn["steps"]:
-            await move(url, channel, character, turn["direction"])
-            i += 1
-    
-    
-    await channel["message"].send("Arrived")
-    
-    
 
 async def move(url, channel, character, direction):
     try:
@@ -84,6 +33,7 @@ async def move(url, channel, character, direction):
         room_data = await get_room_data(url, channel, character)
         data = room_data["data"]
         available_moves = room_data["available_moves"]
+        available_moves.remove('map')
 
         #allows us to inform user of incorrect moves
                 
@@ -95,12 +45,14 @@ async def move(url, channel, character, direction):
                 requests.get(f'{url}ajax_changeroomb?serverid={character['server_id']}&suid={character['character_id']}&rg_sess_id={character['session']['session']}&room={move_to}&lastroom={data['current_room']}').json()
                 new_room = await get_room_data(url, channel, character)
                 next_moves = new_room["available_moves"]
+                next_moves.remove('map')
+
                 if "error" in new_room.keys():
-                    await channel["message"].send(f"Failed to move to room: {move_to}. Please try again.")
+                    await channel["message"].send(f"Screwed that one up: {move_to}. Please try again.")
                 if new_room:
-                    await channel["message"].send(f"Successfully moved to room: {move_to}. Avaialable moves: {', '.join(next_moves)}")
+                    await channel["message"].send(f"You take a step to the {direction.lower()}. ({move_to}) Avaialable moves: {', '.join(next_moves)}")
             else:
-                await channel["message"].send(f"Failed to move {move}. Please select a valid move direction. Moves available: {', '.join(available_moves)}")
+                await channel["message"].send(f"What are you thinking? You can't go {direction.lower()}! Try again. Moves available: {', '.join(available_moves)}")
                 return {"status": 400, "moves": available_moves}
         else:
             await channel["message"].reply("There was a grievous error with moving. Check your logs.")
@@ -113,11 +65,17 @@ async def move(url, channel, character, direction):
 
 
 
+
 def heuristic(node, goal):
-    return 1.5 * (abs(goal[0] - node[0]) + abs(goal[1] - node[1]))  # Bias toward goal
-def get_neighbors(current, grid):
-    neighbors = room_data(current)
-    return [neighbors["north"], neighbors["south"], neighbors["east"], neighbors["west"]]
+    
+    weight = 1.5 * abs(int(goal) - int(node))  # Bias toward goal
+    print(f"Weight of move: {weight}")
+    return weight
+
+async def get_neighbors(channel, current: int):
+    neighbors = await room_data(channel, current)
+    return [neighbors[1], neighbors[2], neighbors[3], neighbors[4]]
+
 def reconstruct_path(came_from, start, goal):
     path = []
     current = goal
@@ -126,25 +84,35 @@ def reconstruct_path(came_from, start, goal):
         current = came_from[current]  # Move to the previous node
     path.append(start)  # Add start node at the end
     path.reverse()  # Reverse to get the correct order
+    print(path)
     return path
 
-def astar_pathfinding(start, goal, grid):
-    open_list = []
-    heapq.heappush(open_list, (0, start))
-    came_from = {}
-    cost_so_far = {start: 0}
+async def a_star_search(channel, character, start, goal):
+    """Performs A* search on room graph."""
+    open_set = []
+    heapq.heappush(open_set, (0, start))
 
-    while open_list:
-        _, current = heapq.heappop(open_list)
-        if current == goal:
-            break
+    came_from = {}  # For each room, store (previous_room, next_room)
+    g_score = {start: 0}
+    f_score = {start: heuristic(start, goal)}
+    while open_set:
+        _, current = heapq.heappop(open_set)
         
-        for next_node in get_neighbors(current, grid):
-            new_cost = cost_so_far[current] + 1
-            if next_node not in cost_so_far or new_cost < cost_so_far[next_node]:
-                cost_so_far[next_node] = new_cost
-                priority = new_cost + heuristic(next_node, goal)
-                heapq.heappush(open_list, (priority, next_node))
-                came_from[next_node] = current
-
-    return reconstruct_path(came_from, start, goal)
+        if current == goal:
+            print("Reconstructing path...")
+            reconstructed = reconstruct_path(came_from, start, goal)
+            print(reconstructed)
+            return reconstructed
+        neighbors = await get_neighbors(channel, current)
+        for neighbor in neighbors:
+            if int(neighbor) > 0:
+                tentative_g_score = g_score[current] + 1  # Static cost of 1 per move
+                
+                if neighbor not in g_score or tentative_g_score < g_score[neighbor]:
+                    came_from[neighbor] = current
+                    g_score[neighbor] = tentative_g_score
+                    f_score[neighbor] = tentative_g_score + heuristic(int(neighbor), int(goal))
+                    heapq.heappush(open_set, (f_score[neighbor], neighbor))
+            else:
+                pass
+    return None  # No valid path found

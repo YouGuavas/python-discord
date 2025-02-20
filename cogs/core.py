@@ -1,5 +1,5 @@
 from utils.login import login, logout 
-from utils.moving import move, gorganus 
+from utils.moving import move, a_star_search, move_to_room
 from utils.attacking import attack_by_names, attack_in_a_line, spam_attack
 from utils.runs import alsayic, astral
 from utils.questing import talk_by_name
@@ -7,14 +7,32 @@ from utils.data_functions import get_room_data
 from utils.setting import create_tables
 from utils.getting import list_tables, list_rooms, room_data, list_mobs, get_mob_data
 from utils.raid import raid_by_name
-
+import asyncio
 from discord.ext import commands
 
 from config import OW_USERNAME, OW_PASSWORD, BASE, CHECKER, SERVERID
-rg_sess = {}
 class Main(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+        self.rg_sess = {}
+    #Login Commands
+    @commands.command()
+    async def sess(self, ctx):
+        await ctx.send(self.rg_sess)
+    @commands.command()
+    async def login(self, ctx, character_id="93021"):
+        await login(BASE, OW_USERNAME, OW_PASSWORD, {"message": ctx}, {"session": self.rg_sess, "server_id": SERVERID, "character_id": character_id}, login)
+        current_room = await(get_room_data(BASE, {"message": ctx}, {"session": self.rg_sess, "server_id": SERVERID, "character_id": character_id}))
+        current_room = current_room["data"]["current_room"]
+        await self.bot.add_cog(Moving(self.bot, current_room, self.rg_sess, character_id))
+        await self.bot.add_cog(Attacking(self.bot, self.rg_sess, character_id))
+        await ctx.send(f"Current room: {current_room}")
+
+    @commands.command()
+    async def logout(self, ctx):
+        await logout(BASE, {"message": ctx}, {"session": rg_sess, "server_id": SERVERID, "character_id": CHECKER})
+        rg_sess = {}
+
 
     @commands.command()
     #Ping
@@ -60,38 +78,66 @@ class Main(commands.Cog):
     #Gets Quest Mob Data -- broken
     async def quest_mob(self, ctx, name):
         await get_mob_data({"message": ctx}, True, name)
-
+    
     
 
-class Login(commands.Cog):
-    def __init__(self, bot):
-        self.bot = bot
 
-    @commands.command()
-    async def sess(self, ctx):
-        await ctx.send(self.rg_sess)
-    @commands.command()
-    async def login(self, ctx):
-        await login(BASE, OW_USERNAME, OW_PASSWORD, {"message": ctx}, {"session": rg_sess, "server_id": SERVERID, "character_id": CHECKER}, login)
-    @commands.command()
-    async def logout(self, ctx):
-        await logout(BASE, {"message": ctx}, {"session": rg_sess, "server_id": SERVERID, "character_id": CHECKER})
-        rg_sess = {}
 
 class Moving(commands.Cog):
+    def __init__(self, bot, current_room, rg_sess, character_id):
+        self.bot = bot
+        self.current_room = current_room
+        self.rg_sess = rg_sess
+        self.character_id = character_id
+
     #Moving Commands
     @commands.command()
-    async def north(self, ctx):
-        await move(BASE, {"message": ctx}, {"character_id": CHECKER, "server_id": SERVERID, "session": rg_sess}, direction="north")
+    async def north(self, ctx, steps=1):
+        i = 0
+        while i < steps:
+            await move(BASE, {"message": ctx}, {"character_id": self.character_id, "server_id": SERVERID, "session": self.rg_sess}, direction="north")
+            i += 1
     @commands.command()
-    async def south(self, ctx):
-        await move(BASE, {"message": ctx}, {"character_id": CHECKER, "server_id": SERVERID, "session": rg_sess}, direction="south")
+    async def south(self, ctx, steps=1):
+        i = 0 
+        while i < steps:
+            await move(BASE, {"message": ctx}, {"character_id": self.character_id, "server_id": SERVERID, "session": self.rg_sess}, direction="south")
+            i += 1
     @commands.command()
-    async def east(self, ctx):
-        await move(BASE, {"message": ctx}, {"character_id": CHECKER, "server_id": SERVERID, "session": rg_sess}, direction="east")
+    async def east(self, ctx, steps=1):
+        i = 0
+        while i < steps:
+            await move(BASE, {"message": ctx}, {"character_id": self.character_id, "server_id": SERVERID, "session": self.rg_sess}, direction="east")
+            i += 1
     @commands.command()
-    async def west(self, ctx):
-        await move(BASE, {"message": ctx}, {"character_id": CHECKER, "server_id": SERVERID, "session": rg_sess}, direction="west")
+    async def west(self, ctx, steps=1):
+        i = 0
+        while i < steps:
+            await move(BASE, {"message": ctx}, {"character_id": self.character_id, "server_id": SERVERID, "session": self.rg_sess}, direction="west")
+            i += 1
+    
+    @commands.command()
+    #####A-Star#####
+    async def path(self, ctx, target_room: int):
+        """Finds a path from the current room to the target room and moves step-by-step."""
+        path = await a_star_search(self, ctx, self.current_room, target_room)
+        if not path:
+            await ctx.send("No valid path found.")
+            return
+
+        # For demonstration, send the entire path as text.
+        msg_lines = []
+        print(msg_lines)
+        for room in path:
+            await move_to_room()
+            msg_lines.append(f"Move to {room}.")
+            # Optionally, you might simulate a delay per move.
+            #await asyncio.sleep(1)  # Delay per move
+
+            self.current_room = room  # Update current room
+        await ctx.send("Path found:\n" + "\n".join(msg_lines))
+
+    
     '''@commands.command()
     async def raid(self, ctx, former, god_name):
         chars = ["113468", "113466", "185325", "110591", "115544", "106621", "106622", "106623", "113464"]
@@ -99,45 +145,45 @@ class Moving(commands.Cog):
 
     @commands.command()
     async def astral(self, ctx):
-        chars = ["113375", "113469", "113468"]
+        chars = ["93023", "106620"]#["115544", "104040"]#["93021"]#"113375", "113469", "113468", "93021"]
         for char in chars:
-            await astral(BASE, {"message": ctx}, {"character_id": char, "server_id": SERVERID, "session": rg_sess}, ["Astral Servant"])
+            await astral(BASE, {"message": ctx}, {"character_id": char, "server_id": SERVERID, "session": self.rg_sess}, ["Astral Servant"])
 
     @commands.command()
     async def alsayic(self, ctx):
         chars = ["93021"]
         for char in chars:
-            await alsayic(BASE, {"message": ctx}, {"character_id": char, "server_id": SERVERID, "session": rg_sess}, ["Keeper of the Alsayic Rune"])
-
-    @commands.command()
-    async def gorganus(self, ctx):
-        chars = ["113474"]#"93021", "113469", "113375", "113468", "93023"]#"113468", "113466", "185325", "110591", "115544", "106621", "106622", "106623", "113464"]
-        for char in chars:
-            await gorganus(BASE, {"message": ctx}, {"character_id": char, "server_id": SERVERID, "session": rg_sess})
+            await alsayic(BASE, {"message": ctx}, {"character_id": char, "server_id": SERVERID, "session": self.rg_sess}, ["Keeper of the Alsayic Rune"])
 class Attacking(commands.Cog):
+    def __init__(self, bot, rg_sess, character_id):
+        self.bot = bot
+        self.rg_sess = rg_sess
+        self.character_id = character_id
     #Attacking Commands
     @commands.command()
     async def attack(self, ctx, *mob_names):
-        await attack_by_names(BASE, {"message": ctx}, {"character_id": CHECKER, "server_id": SERVERID, "session": rg_sess}, mob_names)
+        await attack_by_names(BASE, {"message": ctx}, {"character_id": self.character_id, "server_id": SERVERID, "session": self.rg_sess}, mob_names)
     @commands.command()
     async def zerx(self, ctx, loops):
-        await spam_attack(BASE, {"message": ctx}, {"character_id": CHECKER, "server_id": SERVERID, "session": rg_sess}, ["Zerx, Gladiator Titan"], int(loops))
+        await spam_attack(BASE, {"message": ctx}, {"character_id": self.character_id, "server_id": SERVERID, "session": self.rg_sess}, ["Zerx, Gladiator Titan"], int(loops))
     @commands.command()
     async def potshot(self, ctx, loops, direction, *mob_names):
         if int(loops):
             counter = 0
             while counter < int(loops):
-                await move(BASE, {"message": ctx}, {"character_id": CHECKER, "server_id": SERVERID, "session": rg_sess}, direction=direction)
-                await attack_by_names(BASE, {"message": ctx}, {"character_id": CHECKER, "server_id": SERVERID, "session": rg_sess}, mob_names)
+                await move(BASE, {"message": ctx}, {"character_id": self.character_id, "server_id": SERVERID, "session": self.rg_sess}, direction=direction)
+                await attack_by_names(BASE, {"message": ctx}, {"character_id": self.character_id, "server_id": SERVERID, "session": self.rg_sess}, mob_names)
                 counter += 1
             await ctx["message"].reply("Finished.")
         else:
             ctx.send("Please choose a number of loops.")
     @commands.command()
     async def orbs1(self, ctx, *mob_names):
-        await attack_in_a_line(BASE, {"message": ctx}, {"character_id": CHECKER, "server_id": SERVERID, "session": rg_sess}, mob_names, 14, "north")
+        await attack_in_a_line(BASE, {"message": ctx}, {"character_id": self.character_id, "server_id": SERVERID, "session": self.rg_sess}, mob_names, 14, "north")
         self.east(self, ctx)
-        await attack_in_a_line(BASE, {"message": ctx}, {"character_id": CHECKER, "server_id": SERVERID, "session": rg_sess}, mob_names, 14, "south")
+        await attack_in_a_line(BASE, {"message": ctx}, {"character_id": self.character_id, "server_id": SERVERID, "session": self.rg_sess}, mob_names, 14, "south")
+
+
 class Questing(commands.Cog):
     #Questing Commands
     @commands.command()
@@ -150,7 +196,3 @@ class Questing(commands.Cog):
 # Use an async function to properly load the cog
 async def setup(bot):
     await bot.add_cog(Main(bot))
-    await bot.add_cog(Login(bot))  #Await this
-    await bot.add_cog(Moving(bot))
-    await bot.add_cog(Attacking(bot))
-    await bot.add_cog(Questing(bot))

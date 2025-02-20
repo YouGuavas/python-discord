@@ -4,18 +4,16 @@ from urllib.parse import urlencode
 
 async def get_sess(response, channel, character):
         try:
-            await channel["message"].reply('Attempting to get session.')
+            await channel["message"].reply('Hang on, chief. Let me get a session.')
             # Extract session ID from cookies
             for cookie in response.cookies:
                 if cookie.name == "rg_sess_id":
                     character["session"]["session"] = cookie.value
-                    if "message" in channel:
-                        await channel["message"].reply('session: '+character["session"]["session"])
                     return character["session"]["session"]
         except Exception as e:
             print(e)
             if "message" in channel:
-                await channel["message"].reply("There was an error getting the session. Check your logs.")
+                await channel["message"].reply("Houston, we had an error getting the session.")
 
 
 
@@ -50,12 +48,12 @@ async def login(url, user, password, channel, character, cb=None):
         else:
             if cb:
                 response = await cb(url, user, password, channel, character)  # Ensure it's awaited
+        print(character)
         session = await get_sess(response, channel, character)
         # Check login success
         if response.headers.get("Location", "") != "https://sigil.outwar.com/LE=1":
             print(f"Successfully logged into rga: {user}, new session id: {session}.")
             if "message" in channel:
-                await channel["message"].reply(f"Successfully logged into rga: {user}, new session id: {session}.")
                 await channel["message"].reply(f"Play link: {url}home.php?serverid={character["server_id"]}&suid={character["character_id"]}&rg_sess_id={session}")
                 
                 # Extract session ID from cookies

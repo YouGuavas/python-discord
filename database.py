@@ -152,7 +152,7 @@ def log_action(username, action):
 
 def add_room(room, north, south, east, west):
 
-    conn, cursor = connect_db()
+    conn, cursor = connect_db(MAP_DB)
     added = False
     try:
         room_number = room["curRoom"]
@@ -170,7 +170,7 @@ def add_room(room, north, south, east, west):
 
 def get_room_from_db(room):
     #Used as a status check
-    conn, cursor = connect_db()
+    conn, cursor = connect_db(MAP_DB)
     exists = False
     try:
         room_number = room["curRoom"]
@@ -188,7 +188,7 @@ def get_room_from_db(room):
 
 def room_data(room):
     #Lists DATA about room.
-    conn, cursor = connect_db()
+    conn, cursor = connect_db(MAP_DB)
 
     res = cursor.execute(f"SELECT room, north, south, east, west FROM rooms WHERE room = ?", (room,))
     room = res.fetchone()
@@ -198,7 +198,7 @@ def room_data(room):
 
 def list_rooms():
     """Lists rooms for the bot."""
-    conn, cursor = connect_db()
+    conn, cursor = connect_db(MAP_DB)
 
     res = cursor.execute("SELECT map, room FROM rooms")
     rooms = res.fetchall()
@@ -214,7 +214,7 @@ def list_rooms():
 
 def get_mob(quest_mob, name):
 
-    conn, cursor = connect_db()
+    conn, cursor = connect_db(MAP_DB)
     try:
         if not quest_mob:
             print(f"Grabbing mob: {name}.")
@@ -238,7 +238,7 @@ def get_mob(quest_mob, name):
 
 def add_mob(name, room, map, quest_mob):
 
-    conn, cursor = connect_db()
+    conn, cursor = connect_db(MAP_DB)
     try:
         if not quest_mob:
             cursor.execute("INSERT INTO mobs (name, room, map) VALUES (?, ?, ?)", (name, room, map))
@@ -256,7 +256,7 @@ def add_mob(name, room, map, quest_mob):
 
 def list_mobs(quest_mobs, room=None):
     #Lists MOBS
-    conn, cursor = connect_db()
+    conn, cursor = connect_db(MAP_DB)
     if room: 
         if quest_mobs:
             res = cursor.execute(f"SELECT name,room FROM quest_mobs WHERE room = ?", (room,))
