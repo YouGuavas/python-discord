@@ -5,26 +5,14 @@ from urllib.parse import urlencode
 from utils.data_functions import get_room_data
 from utils.getting import room_data
 
-async def move_to_room(url, channel, character, current, new):
-    try:
-        current_room = await room_data(current)
-        print(current_room)
-    except Exception as e:
-            print(f'error: {e}')
-            if "message" in channel:
-                await channel["message"].reply("There was an error with moving. Check your logs.")
-
-
-async def move(url, channel, character, direction):
+async def move_by_direction(url, channel, character, direction):
     try:
         """
-        Handles moving either in a direction or to a specific position.
-
+        Handles moving in a direction.
         :param base_url: API base URL
         :param ctx: Discord message context
         :param session: Dictionary holding auth session
         :param direction: Optional string for movement direction (e.g., 'up', 'down')
-        :param position: Optional tuple (x, y) for absolute movement -- currently disabled
         """
         directions = ['north', 'south', 'east', 'west']
         if not character["session"]["session"]:
@@ -61,13 +49,19 @@ async def move(url, channel, character, direction):
     except Exception as e:
             print(f'error: {e}')
             if "message" in channel:
-                await channel["message"].reply("There was an error with moving. Check your logs.")
+                await channel["message"].reply(f"There was an error moving {direction.lower()}. Check your logs.")
 
 
-
+async def move_to_room(url, channel, character, current_room, next_room):
+    try:
+        print(f"Current room: {current_room}, next room: {next_room}")
+        requests.get(f'{url}ajax_changeroomb?serverid={character['server_id']}&suid={character['character_id']}&rg_sess_id={character['session']['session']}&room={next_room}&lastroom={current_room}').json()
+    except Exception as e:
+            print(f'error: {e}')
+            if "message" in channel:
+                await channel["message"].reply(f"There was an error moving to room: {next_room}. Check your logs.")
 
 def heuristic(node, goal):
-    
     weight = 1.5 * abs(int(goal) - int(node))  # Bias toward goal
     print(f"Weight of move: {weight}")
     return weight
@@ -84,7 +78,6 @@ def reconstruct_path(came_from, start, goal):
         current = came_from[current]  # Move to the previous node
     path.append(start)  # Add start node at the end
     path.reverse()  # Reverse to get the correct order
-    print(path)
     return path
 
 async def a_star_search(channel, character, start, goal):
@@ -97,15 +90,15 @@ async def a_star_search(channel, character, start, goal):
     f_score = {start: heuristic(start, goal)}
     while open_set:
         _, current = heapq.heappop(open_set)
-        
+
         if current == goal:
-            print("Reconstructing path...")
             reconstructed = reconstruct_path(came_from, start, goal)
-            print(reconstructed)
             return reconstructed
         neighbors = await get_neighbors(channel, current)
         for neighbor in neighbors:
+            new_neighbors = []
             if int(neighbor) > 0:
+                new_neighbors.append(neighbor)
                 tentative_g_score = g_score[current] + 1  # Static cost of 1 per move
                 
                 if neighbor not in g_score or tentative_g_score < g_score[neighbor]:
@@ -113,6 +106,5 @@ async def a_star_search(channel, character, start, goal):
                     g_score[neighbor] = tentative_g_score
                     f_score[neighbor] = tentative_g_score + heuristic(int(neighbor), int(goal))
                     heapq.heappush(open_set, (f_score[neighbor], neighbor))
-            else:
-                pass
+
     return None  # No valid path found

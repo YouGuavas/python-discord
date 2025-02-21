@@ -1,6 +1,6 @@
 import requests
 from urllib.parse import urlencode
-from utils.moving import move 
+from utils.moving import move_by_direction 
 from utils.data_functions import get_attack_data
 
 
@@ -63,6 +63,6 @@ async def spam_attack(url, channel, character, mob_names, loops):
 async def attack_in_a_line(url, channel, character, mob_names, loops, direction): 
             counter = 0
             while counter < int(loops):
-                await move(url, {"message": channel["message"]}, {"character_id": character["character_id"], "server_id": character["server_id"], "session": character["session"]["session"]}, direction=direction)
+                await move_by_direction(url, {"message": channel["message"]}, {"character_id": character["character_id"], "server_id": character["server_id"], "session": character["session"]["session"]}, direction=direction)
                 await attack_by_names(url, {"message": channel["message"]}, {"character_id": character["character_id"], "server_id": character["server_id"], "session": character["session"]}, mob_names)
                 counter += 1

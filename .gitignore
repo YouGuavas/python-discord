@@ -9,3 +9,4 @@ database/__pycache__*
 
 venv
 game_data.db
+player_data.db

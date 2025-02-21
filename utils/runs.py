@@ -1,4 +1,4 @@
-from utils.moving import move
+from utils.moving import move_by_direction
 from utils.attacking import attack_by_names
 
 async def alsayic(url, channel, character, mobs):
@@ -22,7 +22,7 @@ async def alsayic(url, channel, character, mobs):
     for step in steps:
         i = 0 
         while i < step["steps"]:
-            await move(url, channel, character, step["direction"])
+            await move_by_direction(url, channel, character, step["direction"])
             await attack_by_names(url, channel, character, mobs)
 
             i += 1
@@ -46,7 +46,7 @@ async def astral(url, channel, character, mobs):
         for step in steps:
             i = 0 
             while i < step["steps"]:
-                await move(url, channel, character, step["direction"])
+                await move_by_direction(url, channel, character, step["direction"])
                 await attack_by_names(url, channel, character, mobs)
 
                 i += 1
