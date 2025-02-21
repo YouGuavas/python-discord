@@ -108,3 +108,13 @@ async def a_star_search(channel, character, start, goal):
                     heapq.heappush(open_set, (f_score[neighbor], neighbor))
 
     return None  # No valid path found
+
+
+
+#######TO-DO ###
+'''
+Add teleports
+Check teleport a* path lengths to destination node. Compare against start a* path. 
+If teleport is shorter, store that and compare against. 
+Teleport length should be passed for efficiency
+'''
