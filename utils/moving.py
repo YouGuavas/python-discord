@@ -51,10 +51,18 @@ async def move_by_direction(url, channel, character, direction):
             if "message" in channel:
                 await channel["message"].reply(f"There was an error moving {direction.lower()}. Check your logs.")
 
-
+async def a_star_move(self, url, channel, character, target_room):
+    path = await a_star_search(channel, character, self.current_room, target_room)
+    print(f'moving path: {path}')
+    for room in enumerate(path):
+            path_id = room[0]
+            if path_id < len(path)-1:
+                current_room_number = room[1]
+                next_room_number = path[path_id+1]
+                await move_to_room(url, channel, character, str(current_room_number), str(next_room_number))
+                self.current_room = current_room_number
 async def move_to_room(url, channel, character, current_room, next_room):
     try:
-        print(f"Current room: {current_room}, next room: {next_room}")
         requests.get(f'{url}ajax_changeroomb?serverid={character['server_id']}&suid={character['character_id']}&rg_sess_id={character['session']['session']}&room={next_room}&lastroom={current_room}').json()
     except Exception as e:
             print(f'error: {e}')

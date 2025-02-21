@@ -25,11 +25,12 @@ def create_map_tables():
     CREATE TABLE IF NOT EXISTS rooms (
         id INTEGER,
         room INTEGER PRIMARY KEY,
-        north INTEGER,
-        south INTEGER,
-        east INTEGER,
-        west INTEGER,
-        map TEXT
+        north INTEGER DEFAULT 0,
+        south INTEGER DEFAULT 0,
+        east INTEGER DEFAULT 0,
+        west INTEGER DEFAULT 0,
+        map TEXT,
+        teleport INTEGER DEFAULT 0
     )
     ''')
     cursor.execute('''
@@ -38,6 +39,7 @@ def create_map_tables():
         name TEXT,
         room INTEGER,
         map TEXT,
+        raid INTEGER DEFAULT 0,
         FOREIGN KEY(room) REFERENCES rooms(room),
         FOREIGN KEY(map) REFERENCES rooms(map)
     )
@@ -218,7 +220,7 @@ def get_mob(quest_mob, name):
     try:
         if not quest_mob:
             print(f"Grabbing mob: {name}.")
-            res = cursor.execute(f"SELECT name, room FROM mobs WHERE name = ?",  (name,))
+            res = cursor.execute(f"SELECT room FROM mobs WHERE name = ?",  (name,))
             print(f"Mob {name} grabbed.")
             mob = res.fetchall()
 

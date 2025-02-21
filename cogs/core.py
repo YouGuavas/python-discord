@@ -12,8 +12,8 @@ import asyncio
 from discord.ext import commands
 
 from config import OW_USERNAME, OW_PASSWORD, BASE, SERVERID
-CHECKER="255175"
-chars = ["113468"]#"93021", "104040", "113375", "113469", "93023", "106620", "46717", "110591", "106621"]
+CHECKER="225857"
+chars = ["225857"]#"93021", "104040", "113375", "113469", "93023", "106620", "46717", "110591", "106621"]
 
 class Main(commands.Cog):
     def __init__(self, bot):
@@ -79,12 +79,12 @@ class Main(commands.Cog):
     @commands.command()
     #Gets Mob Data -- broken
     async def mob(self, ctx, name):
-        await get_mob_data({"message": ctx}, False, name)
+        await get_mob_data({"message": ctx}, name, False)
     
     @commands.command()
     #Gets Quest Mob Data -- broken
     async def quest_mob(self, ctx, name):
-        await get_mob_data({"message": ctx}, True, name)
+        await get_mob_data({"message": ctx}, name, True)
     
     
 class Attacking(commands.Cog):
@@ -175,7 +175,6 @@ class Moving(commands.Cog):
 
             self.current_room = room  # Update current room
         await ctx.send("Path found:\n" + "\n".join(msg_lines))
-
     
     '''@commands.command()
     async def raid(self, ctx, former, god_name):
@@ -185,7 +184,7 @@ class Moving(commands.Cog):
     @commands.command()
     async def astral(self, ctx):
         for char in chars:
-            await astral(BASE, {"message": ctx}, {"character_id": char, "server_id": SERVERID, "session": self.rg_sess}, ["Astral Servant"])
+            await astral(self, BASE, {"message": ctx}, {"character_id": char, "server_id": SERVERID, "session": self.rg_sess}, "Astral Servant")
 
     @commands.command()
     async def alsayic(self, ctx):
