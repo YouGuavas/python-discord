@@ -4,12 +4,17 @@ from utils.moving import move_by_direction
 from utils.data_functions import get_attack_data
 
 
-async def attack_by_names(url, channel, character, mob_names=[]):
+async def attack_by_names(url, channel, character, mob_names=[], excluded=[]):
     try:
         #This is the room API response
         world_data = requests.get(f'{url}ajax_changeroomb.php?serverid={character['server_id']}&suid={character['character_id']}&rg_sess_id={character['session']['session']}').json()
         mobs_in_room = world_data["roomDetailsNew"]
-        mob_name_string = ', '.join(mob_names).lower()
+        final_names = []
+        for name in mob_names:
+            if name not in excluded:
+                final_names.append(name)
+            
+        mob_name_string = ', '.join(final_names).lower()
         for mob in mobs_in_room:
             if mob["name"]:
                 if mob["name"].lower() in mob_name_string:

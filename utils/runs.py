@@ -1,8 +1,9 @@
+from inventory.backpack import get_contents
 from utils.moving import move_by_direction, a_star_move, room_teleport
 from utils.attacking import attack_by_names
 from utils.getting import get_mob_data
 
-async def orbs(url, channel, character, mobs):
+async def orbs(url, channel, character):
     steps = [
         {"direction": "west", "steps": 2},
         {"direction": "north", "steps": 15},
@@ -34,15 +35,42 @@ async def orbs(url, channel, character, mobs):
                 {"direction": "south", "steps": 14},
         {"direction": "east", "steps": 1},
                 {"direction": "north", "steps": 14},
-
-
     ]
+
+    mobs = {
+        "Initiate of Slight": "Orb of Slight",
+        "Initiate of Strength": "Orb of Inner Strength",
+        "Descendant of Destiny": "Orb of Destiny",
+        "Descendant of Will": "Orb of Will",
+    }
+    excluded_mobs = []
+    orbs = {
+        "Orb of Slight": 0,
+        "Orb of Inner Strength": 0,
+        "Orb of Destiny": 0,
+        "Orb of Will": 0
+    }
+
+
+    
+        
+
+    
     await room_teleport(url, channel, character, "10")
     for step in steps:
+        orb_contents = await get_contents(url, channel, character, "orb")
+        for orb in orb_contents:
+            if orb in orbs.keys():
+                orbs[orb] += 1
+        print(orbs)
+        for mob in mobs.keys():
+            if orbs[mobs[mob]] >= 3:
+                excluded_mobs.append(mob)
+        print(excluded_mobs)
         i = 0 
         while i < step["steps"]:
             await move_by_direction(url, channel, character, step["direction"])
-            await attack_by_names(url, channel, character, mobs)
+            await attack_by_names(url, channel, character, mobs.keys(), excluded_mobs)
 
             i += 1
         await channel["message"].send("Turning.")
@@ -63,8 +91,6 @@ async def alsayic(url, channel, character, mobs):
             {"direction": "south", "steps": 12},
             {"direction": "west", "steps": 12},
             {"direction": "north", "steps": 6},
-
-
 
              ]
     for step in steps:

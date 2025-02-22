@@ -1,3 +1,4 @@
+from inventory.backpack import get_contents
 from utils.login import login, logout 
 from utils.moving import move_by_direction, a_star_search, move_to_room
 from utils.attacking import attack_by_names, attack_in_a_line, spam_attack
@@ -20,11 +21,8 @@ if SERVER == "torax":
 else:
     SERVERID = 1
 
-CHECKER="93021"
-#chars = ["93021", "113468", "113375", "113469", "93023", "106620", "46717", "110591", "106621"]
-chars = ["256447", "255181", "186149",   "186161","186150","186157",] #"225182", "186145","186156", "255175", "186146","186148", "256448", "255185", "255184", "255172", "186159", "255179", "186151", "256449","186158", "186162","255177", "255173","186155","255176","186144",-- stops upward at Ninja5
-#chars = ["225857"]
-#chars = ["115544", "104040"]
+chars = ["000000"]
+
 class Main(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -35,19 +33,21 @@ class Main(commands.Cog):
     async def sess(self, ctx):
         await ctx.send(self.rg_sess)
     @commands.command()
-    async def login(self, ctx, character_id="93021"):
+    async def login(self, ctx, character_id=chars[0]):
         await login(BASE, OW_USERNAME, OW_PASSWORD, {"message": ctx}, {"session": self.rg_sess, "server_id": SERVERID, "character_id": character_id}, login)
         current_room = await(get_room_data(BASE, {"message": ctx}, {"session": self.rg_sess, "server_id": SERVERID, "character_id": character_id}))
         current_room = current_room["data"]["current_room"]
         await self.bot.add_cog(Attacking(self.bot, self.rg_sess, character_id))
+        await self.bot.add_cog(Inventory(self.bot, self.rg_sess, character_id))
         await self.bot.add_cog(Moving(self.bot, current_room, self.rg_sess, character_id))
         await self.bot.add_cog(Skilling(self.bot, self.rg_sess, character_id))
+
 
         await ctx.send(f"Current room: {current_room}")
 
     @commands.command()
     async def logout(self, ctx):
-        await logout(BASE, {"message": ctx}, {"session": rg_sess, "server_id": SERVERID, "character_id": CHECKER})
+        await logout(BASE, {"message": ctx}, {"session": rg_sess, "server_id": SERVERID, "character_id": chars[0]})
         rg_sess = {}
 
 
@@ -102,13 +102,16 @@ class Attacking(commands.Cog):
         self.bot = bot
         self.rg_sess = rg_sess
         self.character_id = character_id
+
     #Attacking Commands
     @commands.command()
     async def attack(self, ctx, *mob_names):
         await attack_by_names(BASE, {"message": ctx}, {"character_id": self.character_id, "server_id": SERVERID, "session": self.rg_sess}, mob_names)
+    
     @commands.command()
     async def zerx(self, ctx, loops):
         await spam_attack(BASE, {"message": ctx}, {"character_id": self.character_id, "server_id": SERVERID, "session": self.rg_sess}, ["Zerx, Gladiator Titan"], int(loops))
+    
     @commands.command()
     async def potshot(self, ctx, loops, direction, *mob_names):
         if int(loops):
@@ -120,13 +123,31 @@ class Attacking(commands.Cog):
             await ctx["message"].reply("Finished.")
         else:
             ctx.send("Please choose a number of loops.")
+
+class Inventory(commands.Cog):
+    def __init__(self, bot, rg_sess, character_id):
+        self.bot = bot
+        self.rg_sess = rg_sess
+        self.character_id = character_id
     @commands.command()
-    async def orbs1(self, ctx, *mob_names):
-        await attack_in_a_line(BASE, {"message": ctx}, {"character_id": self.character_id, "server_id": SERVERID, "session": self.rg_sess}, mob_names, 14, "north")
-        self.east(self, ctx)
-        await attack_in_a_line(BASE, {"message": ctx}, {"character_id": self.character_id, "server_id": SERVERID, "session": self.rg_sess}, mob_names, 14, "south")
+    async def get_bp(self, ctx):
+        contents = await get_contents(BASE, {"message": ctx}, {"character_id": self.character_id, "server_id": SERVERID, "session": self.rg_sess}, "regular")
+        if len(contents) == 0:
+            await ctx.send("Backpack is empty!")
+            return
+        for item in contents:
+            print(item)
+    @commands.command()
+    async def get_orbs(self, ctx):
+        contents = await get_contents(BASE, {"message": ctx}, {"character_id": self.character_id, "server_id": SERVERID, "session": self.rg_sess}, "orb")
+        if len(contents) == 0:
+            await ctx.send("Orbs backpack is empty!")
+            return
+        for item in contents:
+            print(item)
+        
 
-
+        
 class Moving(commands.Cog):
     def __init__(self, bot, current_room, rg_sess, character_id):
         self.bot = bot
@@ -141,18 +162,21 @@ class Moving(commands.Cog):
         while i < steps:
             await move_by_direction(BASE, {"message": ctx}, {"character_id": self.character_id, "server_id": SERVERID, "session": self.rg_sess}, direction="north")
             i += 1
+    
     @commands.command()
     async def south(self, ctx, steps=1):
         i = 0 
         while i < steps:
             await move_by_direction(BASE, {"message": ctx}, {"character_id": self.character_id, "server_id": SERVERID, "session": self.rg_sess}, direction="south")
             i += 1
+    
     @commands.command()
     async def east(self, ctx, steps=1):
         i = 0
         while i < steps:
             await move_by_direction(BASE, {"message": ctx}, {"character_id": self.character_id, "server_id": SERVERID, "session": self.rg_sess}, direction="east")
             i += 1
+    
     @commands.command()
     async def west(self, ctx, steps=1):
         i = 0
@@ -169,7 +193,6 @@ class Moving(commands.Cog):
         if not path:
             await ctx.send("No valid path found.")
             return
-
         # For demonstration, send the entire path as text.
         msg_lines = []
         for room in enumerate(path):
@@ -178,18 +201,11 @@ class Moving(commands.Cog):
                 current_room_number = room[1]
                 next_room_number = path[path_id+1]
                 await move_to_room(BASE, {"message": ctx}, {"character_id": self.character_id, "server_id": SERVERID, "session": self.rg_sess}, str(current_room_number), str(next_room_number))
-                msg_lines.append(f"Move to {next_room_number}.")
-                
+                msg_lines.append(f"Move to {next_room_number}.")    
             # Optionally, you might simulate a delay per move.
             #await asyncio.sleep(1)  # Delay per move
-
             self.current_room = room  # Update current room
         await ctx.send("Path found:\n" + "\n".join(msg_lines))
-    
-    '''@commands.command()
-    async def raid(self, ctx, former, god_name):
-        chars = ["113468", "113466", "185325", "110591", "115544", "106621", "106622", "106623", "113464"]
-        await raid_by_name(BASE, {"message": ctx}, {"character_id": former, "server_id": SERVERID, "session": rg_sess}, god_name, chars)'''
 
     @commands.command()
     async def astral(self, ctx):
@@ -197,11 +213,10 @@ class Moving(commands.Cog):
             await astral(BASE, {"message": ctx}, {"character_id": char, "server_id": SERVERID, "session": self.rg_sess}, ["Astral Servant"])
     @commands.command()
     async def holy(self, ctx):
-        await holy(BASE, {"message": ctx}, {"character_id": "93021", "server_id": SERVERID, "session": self.rg_sess}, ["Holy Headhunter" "Holy Elder" "Holy Skelemech" "Holy Exterminator" "Holy Potionmaster"])
+        await holy(BASE, {"message": ctx}, {"character_id": chars[0], "server_id": SERVERID, "session": self.rg_sess}, ["Holy Headhunter" "Holy Elder" "Holy Skelemech" "Holy Exterminator" "Holy Potionmaster"])
 
     @commands.command()
     async def alsayic(self, ctx):
-        chars = ["93021"]
         for char in chars:
             await alsayic(BASE, {"message": ctx}, {"character_id": char, "server_id": SERVERID, "session": self.rg_sess}, ["Keeper of the Alsayic Rune"])
     @commands.command()
@@ -209,16 +224,11 @@ class Moving(commands.Cog):
         for char in chars:
             await orbs(BASE, {"message": ctx}, {"character_id": char, "server_id": SERVERID, "session": self.rg_sess}, ["Initiate of Truth"])
 
-'''
-class Questing(commands.Cog):
-    #Questing Commands
     @commands.command()
-    async def talk(self, ctx, mob_name, quest_name):
-        await talk_by_name(BASE, {"message": ctx}, {"character_id": CHECKER, "server_id": SERVERID, "session": rg_sess}, mob_name, quest_name)
-    @commands.command()
-    async def room(self, ctx):
-        await get_room_data(BASE, {"message": ctx}, {"character_id": CHECKER, "server_id": SERVERID, "session": rg_sess})
-'''
+    async def orbs(self, ctx):
+        for char in chars:
+            await orbs(BASE, {"message": ctx}, {"character_id": char, "server_id": SERVERID, "session": self.rg_sess})
+
 
 
 class Skilling(commands.Cog):
