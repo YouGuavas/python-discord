@@ -5,6 +5,12 @@ from urllib.parse import urlencode
 from utils.data_functions import get_room_data
 from utils.getting import room_data
 
+
+async def room_teleport(url, channel, character, room):
+    teleport = requests.get(f"{url}world.php?suid={character["character_id"]}&serverid={character["server_id"]}&rg_sess_id={character["session"]["session"]}&room={room}")
+    print(teleport)
+    return teleport
+
 async def move_by_direction(url, channel, character, direction):
     try:
         """
@@ -38,7 +44,8 @@ async def move_by_direction(url, channel, character, direction):
                 if "error" in new_room.keys():
                     await channel["message"].send(f"Screwed that one up: {move_to}. Please try again.")
                 if new_room:
-                    await channel["message"].send(f"You take a step to the {direction.lower()}. ({move_to}) Avaialable moves: {', '.join(next_moves)}")
+                    print(direction)
+                    #await channel["message"].send(f"You take a step to the {direction.lower()}. ({move_to}) Avaialable moves: {', '.join(next_moves)}")
             else:
                 await channel["message"].send(f"What are you thinking? You can't go {direction.lower()}! Try again. Moves available: {', '.join(available_moves)}")
                 return {"status": 400, "moves": available_moves}

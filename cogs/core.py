@@ -1,7 +1,7 @@
 from utils.login import login, logout 
 from utils.moving import move_by_direction, a_star_search, move_to_room
 from utils.attacking import attack_by_names, attack_in_a_line, spam_attack
-from utils.runs import alsayic, astral
+from utils.runs import alsayic, astral, holy, orbs
 from utils.questing import talk_by_name
 from utils.data_functions import get_room_data
 from utils.setting import create_tables
@@ -11,10 +11,20 @@ from utils.skills import underling_buff, get_skill_info, cast_skill
 import asyncio
 from discord.ext import commands
 
-from config import OW_USERNAME, OW_PASSWORD, BASE, SERVERID
-CHECKER="225857"
-chars = ["225857"]#"93021", "104040", "113375", "113469", "93023", "106620", "46717", "110591", "106621"]
+from config import OW_USERNAME, OW_PASSWORD
+SERVER = "sigil"
+BASE=f"https://{SERVER}.outwar.com/"
 
+if SERVER == "torax":
+    SERVERID = 2
+else:
+    SERVERID = 1
+
+CHECKER="93021"
+#chars = ["93021", "113468", "113375", "113469", "93023", "106620", "46717", "110591", "106621"]
+chars = ["256447", "255181", "186149",   "186161","186150","186157",] #"225182", "186145","186156", "255175", "186146","186148", "256448", "255185", "255184", "255172", "186159", "255179", "186151", "256449","186158", "186162","255177", "255173","186155","255176","186144",-- stops upward at Ninja5
+#chars = ["225857"]
+#chars = ["115544", "104040"]
 class Main(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -184,13 +194,20 @@ class Moving(commands.Cog):
     @commands.command()
     async def astral(self, ctx):
         for char in chars:
-            await astral(self, BASE, {"message": ctx}, {"character_id": char, "server_id": SERVERID, "session": self.rg_sess}, "Astral Servant")
+            await astral(BASE, {"message": ctx}, {"character_id": char, "server_id": SERVERID, "session": self.rg_sess}, ["Astral Servant"])
+    @commands.command()
+    async def holy(self, ctx):
+        await holy(BASE, {"message": ctx}, {"character_id": "93021", "server_id": SERVERID, "session": self.rg_sess}, ["Holy Headhunter" "Holy Elder" "Holy Skelemech" "Holy Exterminator" "Holy Potionmaster"])
 
     @commands.command()
     async def alsayic(self, ctx):
         chars = ["93021"]
         for char in chars:
             await alsayic(BASE, {"message": ctx}, {"character_id": char, "server_id": SERVERID, "session": self.rg_sess}, ["Keeper of the Alsayic Rune"])
+    @commands.command()
+    async def truth(self, ctx):
+        for char in chars:
+            await orbs(BASE, {"message": ctx}, {"character_id": char, "server_id": SERVERID, "session": self.rg_sess}, ["Initiate of Truth"])
 
 '''
 class Questing(commands.Cog):
