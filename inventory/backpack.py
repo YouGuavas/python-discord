@@ -10,3 +10,13 @@ async def get_contents(url, channel, character, type):
             name = slot.split('alt="')[1].split('"')[0]
             full_slots.append(name)
     return full_slots
+
+async def has_enough_items(url : str, channel, character, type : str="quest", names : list=[""], cap : int=1):
+    contents = await get_contents(url, channel, character, type)
+    for name in names:
+        i = 0
+        for item in contents:
+            if item in names:
+                if i <= cap:
+                    i += 1
+            

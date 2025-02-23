@@ -18,7 +18,9 @@ async def attack_by_names(url, channel, character, mob_names=[], excluded=[]):
         for mob in mobs_in_room:
             if mob["name"]:
                 if mob["name"].lower() in mob_name_string:
-                    await attack(url, channel, character, mob)
+                    found = await attack(url, channel, character, mob)
+                    if found:
+                        await channel["message"].reply(f"Found {found}.")
             else:
                 pass
     except Exception as e:
@@ -35,7 +37,7 @@ async def attack(url, channel, character, mob):
         if "Found" in attack_data:
             found_item = attack_data.split('Found ')[1].split('</b>')[0]
             #new_results.append(f"{found_item}")
-            await channel["message"].reply(f"Found {found_item}")
+            return found_item
         won = attack_data.split('var successful = ')[1].split(';')[0]
         results = attack_data.split('battle_result = "')[1].split('"')[0].split("gained")
         for result in results:

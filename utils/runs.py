@@ -44,12 +44,7 @@ async def orbs(url, channel, character):
         "Descendant of Will": "Orb of Will",
     }
     excluded_mobs = []
-    orbs = {
-        "Orb of Slight": 0,
-        "Orb of Inner Strength": 0,
-        "Orb of Destiny": 0,
-        "Orb of Will": 0
-    }
+    
 
 
     
@@ -58,17 +53,106 @@ async def orbs(url, channel, character):
     
     await room_teleport(url, channel, character, "10")
     for step in steps:
-        orb_contents = await get_contents(url, channel, character, "orb")
-        for orb in orb_contents:
-            if orb in orbs.keys():
-                orbs[orb] += 1
-        print(orbs)
-        for mob in mobs.keys():
-            if orbs[mobs[mob]] >= 3:
-                excluded_mobs.append(mob)
-        print(excluded_mobs)
         i = 0 
         while i < step["steps"]:
+            orbs = {
+                "Orb of Slight": 0,
+                "Orb of Inner Strength": 0,
+                "Orb of Destiny": 0,
+                "Orb of Will": 0
+            }
+            orb_contents = await get_contents(url, channel, character, "orb")
+            for orb in orb_contents:
+                if orb in orbs.keys():
+                    orbs[orb] += 1
+            for mob in mobs.keys():
+                if orbs[mobs[mob]] >= 3:
+                    if mob not in excluded_mobs:
+                        excluded_mobs.append(mob)
+            print(excluded_mobs)
+            await move_by_direction(url, channel, character, step["direction"])
+            await attack_by_names(url, channel, character, mobs.keys(), excluded_mobs)
+
+            i += 1
+        await channel["message"].send("Turning.")
+    await channel["message"].send("Finished.")
+    return
+
+
+
+async def orbs2(url, channel, character):
+    steps = [
+        {"direction": "north", "steps": 14},
+        {"direction": "east", "steps": 1},
+        {"direction": "south", "steps": 14},
+        {"direction": "east", "steps": 1},
+                {"direction": "north", "steps": 14},
+        {"direction": "east", "steps": 1},
+                {"direction": "south", "steps": 14},
+        {"direction": "east", "steps": 1},
+                {"direction": "north", "steps": 14},
+        {"direction": "east", "steps": 1},
+                {"direction": "south", "steps": 14},
+
+        {"direction": "east", "steps": 1},
+                {"direction": "north", "steps": 14},
+        {"direction": "east", "steps": 1},
+                {"direction": "south", "steps": 14},
+        #midpoint
+        {"direction": "east", "steps": 2},
+                {"direction": "north", "steps": 14},
+        {"direction": "east", "steps": 1},
+                {"direction": "south", "steps": 14},
+        {"direction": "east", "steps": 1},
+                {"direction": "north", "steps": 14},
+
+        {"direction": "east", "steps": 1},
+                {"direction": "south", "steps": 14},
+        {"direction": "east", "steps": 1},
+                {"direction": "north", "steps": 14},
+    ]
+
+    mobs = {
+        "Conscript of Focus": "Orb of Focus",
+        "Conscript of the Gathering": "Orb of the Gathering",
+        "Conscript of the Elements": "Orb of the Elements",
+
+        "Patron of Malice": "Orb of Malice",
+        "Patron of Melee": "Orb of Melee",
+                "Patron of the Order": "Orb of the Order",
+
+    }
+    excluded_mobs = []
+    
+
+
+    
+        
+
+    
+    for step in steps:
+        i = 0 
+        while i < step["steps"]:
+            orbs = {
+                "Orb of Focus": 0,
+                "Orb of the Gathering": 0,
+                "Orb of the Elements": 0,
+                "Orb of Malice": 0,
+                                "Orb of Melee": 0,
+                                                "Orb of the Order": 0
+
+
+            }
+            orb_contents = await get_contents(url, channel, character, "orb")
+            for orb in orb_contents:
+                if orb in orbs.keys():
+                    orbs[orb] += 1
+            print(orbs)
+            for mob in mobs.keys():
+                if orbs[mobs[mob]] >= 3:
+                    if mob not in excluded_mobs:
+                        excluded_mobs.append(mob)
+            print(excluded_mobs)
             await move_by_direction(url, channel, character, step["direction"])
             await attack_by_names(url, channel, character, mobs.keys(), excluded_mobs)
 

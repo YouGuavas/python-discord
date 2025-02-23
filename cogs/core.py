@@ -2,10 +2,11 @@ import asyncio
 
 
 from inventory.backpack import get_contents
+from characters.getting import get_chars
 from utils.login import login, logout 
 from utils.moving import move_by_direction, a_star_search, move_to_room
 from utils.attacking import attack_by_names, spam_attack
-from utils.runs import alsayic, astral, holy, orbs
+from utils.runs import alsayic, astral, holy, orbs, orbs2
 from utils.data_functions import get_room_data
 from utils.setting import create_tables
 from utils.getting import list_tables, list_rooms, room_data, list_mobs, get_mob_data
@@ -21,34 +22,42 @@ if SERVER == "torax":
 else:
     SERVERID = 1
 
-chars = ["000000"]
-
 class Main(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.rg_sess = {}
-
+        self.mains = []
+        self.trustees = []
     #Login Commands
     @commands.command()
     async def sess(self, ctx):
         await ctx.send(self.rg_sess)
     @commands.command()
-    async def login(self, ctx, character_id=chars[0]):
-        await login(BASE, OW_USERNAME, OW_PASSWORD, {"message": ctx}, {"session": self.rg_sess, "server_id": SERVERID, "character_id": character_id}, login)
+    async def login(self, ctx):
+        await login(BASE, OW_USERNAME, OW_PASSWORD, {"message": ctx}, {"session": self.rg_sess, "server_id": SERVERID}, login)
+        chars = await get_chars(BASE, {"message": ctx}, {"server_id": SERVERID, "session": self.rg_sess})
+        self.mains = chars[0]
+        self.trustees = chars[1]
+        character_id = self.mains[0]["suid"]
         current_room = await(get_room_data(BASE, {"message": ctx}, {"session": self.rg_sess, "server_id": SERVERID, "character_id": character_id}))
         current_room = current_room["data"]["current_room"]
-        await self.bot.add_cog(Attacking(self.bot, self.rg_sess, character_id))
+
         await self.bot.add_cog(Inventory(self.bot, self.rg_sess, character_id))
         await self.bot.add_cog(Moving(self.bot, current_room, self.rg_sess, character_id))
         await self.bot.add_cog(Skilling(self.bot, self.rg_sess, character_id))
+        names = []
+        for character in self.mains:
+            names.append(character["name"])
+        await ctx.send(f"Loaded up rga {OW_USERNAME}.")
+        await ctx.send(f"Playable characters: {', '.join(names)}.")
+        await ctx.send(f"{self.mains[0]["name"]} current room: {current_room}")
+        await ctx.send(f"Play link: {BASE}home.php?serverid={SERVERID}&rg_sess_id={self.rg_sess["session"]}&suid={self.mains[0]["suid"]}")
 
-
-        await ctx.send(f"Current room: {current_room}")
 
     @commands.command()
     async def logout(self, ctx):
-        await logout(BASE, {"message": ctx}, {"session": rg_sess, "server_id": SERVERID, "character_id": chars[0]})
-        rg_sess = {}
+        await logout(BASE, {"message": ctx}, {"session": self.rg_sess, "server_id": SERVERID, "character_id": self.mains[0]})
+        self.rg_sess = {}
 
 
     @commands.command()
@@ -96,33 +105,6 @@ class Main(commands.Cog):
     async def quest_mob(self, ctx, name):
         await get_mob_data({"message": ctx}, name, True)
     
-    
-class Attacking(commands.Cog):
-    def __init__(self, bot, rg_sess, character_id):
-        self.bot = bot
-        self.rg_sess = rg_sess
-        self.character_id = character_id
-
-    #Attacking Commands
-    @commands.command()
-    async def attack(self, ctx, *mob_names):
-        await attack_by_names(BASE, {"message": ctx}, {"character_id": self.character_id, "server_id": SERVERID, "session": self.rg_sess}, mob_names)
-    
-    @commands.command()
-    async def zerx(self, ctx, loops):
-        await spam_attack(BASE, {"message": ctx}, {"character_id": self.character_id, "server_id": SERVERID, "session": self.rg_sess}, ["Zerx, Gladiator Titan"], int(loops))
-    
-    @commands.command()
-    async def potshot(self, ctx, loops, direction, *mob_names):
-        if int(loops):
-            counter = 0
-            while counter < int(loops):
-                await move_by_direction(BASE, {"message": ctx}, {"character_id": self.character_id, "server_id": SERVERID, "session": self.rg_sess}, direction=direction)
-                await attack_by_names(BASE, {"message": ctx}, {"character_id": self.character_id, "server_id": SERVERID, "session": self.rg_sess}, mob_names)
-                counter += 1
-            await ctx["message"].reply("Finished.")
-        else:
-            ctx.send("Please choose a number of loops.")
 
 class Inventory(commands.Cog):
     def __init__(self, bot, rg_sess, character_id):
@@ -228,6 +210,10 @@ class Moving(commands.Cog):
     async def orbs(self, ctx):
         for char in chars:
             await orbs(BASE, {"message": ctx}, {"character_id": char, "server_id": SERVERID, "session": self.rg_sess})
+    @commands.command()
+    async def orbs2(self, ctx):
+        for char in chars:
+            await orbs2(BASE, {"message": ctx}, {"character_id": char, "server_id": SERVERID, "session": self.rg_sess})
 
 
 

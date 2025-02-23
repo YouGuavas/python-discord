@@ -53,10 +53,6 @@ async def login(url, user, password, channel, character, cb=None):
         # Check login success
         if response.headers.get("Location", "") != "https://sigil.outwar.com/LE=1":
             print(f"Successfully logged into rga: {user}, new session id: {session}.")
-            if "message" in channel:
-                await channel["message"].reply(f"Play link: {url}home.php?serverid={character["server_id"]}&suid={character["character_id"]}&rg_sess_id={session}")
-                
-                # Extract session ID from cookies
             return session
         else:
             print(f"Could not log into rga: {user}, check login info.")
