@@ -1,4 +1,5 @@
 import asyncio
+import sys
 
 
 from inventory.backpack import get_contents
@@ -13,7 +14,13 @@ from utils.getting import list_tables, list_rooms, room_data, list_mobs, get_mob
 from utils.skills import underling_buff, get_skill_info, cast_skill
 from discord.ext import commands
 
-from config import OW_USERNAME, OW_PASSWORD
+if len(sys.argv) > 1:
+    if sys.argv[1] == '2':
+        from config import OW_USERNAME_2 as OW_USERNAME, OW_PASSWORD_2 as OW_PASSWORD
+    else:
+        from config import OW_USERNAME, OW_PASSWORD
+else:
+    from config import OW_USERNAME, OW_PASSWORD
 SERVER = "sigil"
 BASE=f"https://{SERVER}.outwar.com/"
 

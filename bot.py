@@ -1,7 +1,14 @@
+import sys
 import discord
-
-from config import TOKEN, DISCORD_CHANNEL_ID
-
+from config import DISCORD_CHANNEL_ID
+if len(sys.argv) > 1:
+    if sys.argv[1] == '2':
+        from config import TOKEN_2 as TOKEN, PREFIX_2 as PREFIX
+    else:
+        from config import TOKEN, PREFIX
+else:
+    from config import TOKEN, PREFIX
+print(PREFIX)
 import asyncio
 from discord.ext import commands
 from cogs.load_cogs import load_cogs
@@ -20,7 +27,7 @@ intents.message_content = True
 intents.guilds = True
 intents.members = True
 
-bot = commands.Bot(command_prefix="!", intents=intents)
+bot = commands.Bot(command_prefix=PREFIX, intents=intents)
 
 @bot.event
 async def on_ready():
