@@ -1,7 +1,7 @@
 import requests
 from urllib.parse import urlencode
 from urllib.request import urlopen
-from utils.data_functions import get_room_data
+from utils.getting import get_room_data
 
 
 async def raid_by_name(url, channel, character, raid_name, joiners):

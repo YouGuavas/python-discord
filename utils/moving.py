@@ -2,8 +2,7 @@ import requests
 import heapq
 
 from urllib.parse import urlencode
-from utils.data_functions import get_room_data
-from utils.getting import room_data
+from utils.getting import room_data, get_room_data
 
 
 async def room_teleport(url, channel, character, room):
@@ -58,7 +57,9 @@ async def move_by_direction(url, channel, character, direction):
             if "message" in channel:
                 await channel["message"].reply(f"There was an error moving {direction.lower()}. Check your logs.")
 
+
 async def a_star_move(self, url, channel, character, target_room):
+
     path = await a_star_search(channel, character, self.current_room, target_room)
     print(f'moving path: {path}')
     for room in enumerate(path):
@@ -68,18 +69,28 @@ async def a_star_move(self, url, channel, character, target_room):
                 next_room_number = path[path_id+1]
                 await move_to_room(url, channel, character, str(current_room_number), str(next_room_number))
                 self.current_room = current_room_number
-async def move_to_room(url, channel, character, current_room, next_room):
+
+
+async def move_to_room(url, channel, character, current_room, path_rooms):
     try:
-        requests.get(f'{url}ajax_changeroomb?serverid={character['server_id']}&suid={character['character_id']}&rg_sess_id={character['session']['session']}&room={next_room}&lastroom={current_room}').json()
+        path_rooms = path_rooms.reverse()
+        path_rooms.append(current_room)
+        path_rooms = path_rooms.reverse()
+        goal_room = path_rooms[len(path_rooms)]
+        requests.get(f'{url}ajax_changeroomb?serverid={character['server_id']}&suid={character['character_id']}&rg_sess_id={character['session']['session']}&room={path_rooms[1]}&lastroom={path_rooms[0]}').json()
+        if len(path_rooms) > 0:
+            move_to_room(url, channel, character, path_rooms[1], goal_room)
     except Exception as e:
             print(f'error: {e}')
             if "message" in channel:
-                await channel["message"].reply(f"There was an error moving to room: {next_room}. Check your logs.")
+                await channel["message"].reply(f"There was an error moving to room: {path_rooms[1]}. Check your logs.")
+
 
 def heuristic(node, goal):
     weight = 1.5 * abs(int(goal) - int(node))  # Bias toward goal
     print(f"Weight of move: {weight}")
     return weight
+
 
 async def get_neighbors(channel, current: int):
     neighbors = await room_data(channel, current)

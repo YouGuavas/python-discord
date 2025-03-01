@@ -1,7 +1,7 @@
 import requests
 from urllib.parse import urlencode
 from utils.moving import move_by_direction 
-from utils.data_functions import get_attack_data
+from utils.getting import get_attack_data
 
 
 async def attack_by_names(url, channel, character, mob_names=[], excluded=[]):

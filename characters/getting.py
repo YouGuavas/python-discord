@@ -1,7 +1,7 @@
 import requests
 
 async def get_chars(url, channel, character):
-    page = requests.get(f"{url}accounts.php?rg_sess_id={character["session"]["session"]}&serverid={character["server_id"]}").text
+    page = requests.get(f"{url}accounts.php?ac_serverid={character["server_id"]}&rg_sess_id={character["session"]["session"]}").text
     mains = page.split('characters on this server')[1].split("Trustee Access")[0].split("<tr>")
     trustees = page.split("Trustee Access")[1].split("</tbody>")[0].split("<tr>")
     main_chars = []

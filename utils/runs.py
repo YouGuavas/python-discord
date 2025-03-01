@@ -1,3 +1,4 @@
+import asyncio
 from inventory.backpack import get_contents
 from utils.moving import move_by_direction, a_star_move, room_teleport
 from utils.attacking import attack_by_names
@@ -50,7 +51,6 @@ async def orbs(url, channel, character):
     
         
 
-    
     await room_teleport(url, channel, character, "10")
     for step in steps:
         i = 0 
@@ -60,6 +60,120 @@ async def orbs(url, channel, character):
                 "Orb of Inner Strength": 0,
                 "Orb of Destiny": 0,
                 "Orb of Will": 0
+            }
+            orb_contents = await get_contents(url, channel, character, "orb")
+            for orb in orb_contents:
+                if orb in orbs.keys():
+                    orbs[orb] += 1
+            for mob in mobs.keys():
+                if orbs[mobs[mob]] >= 3:
+                    if mob not in excluded_mobs:
+                        excluded_mobs.append(mob)
+            if len(excluded_mobs) == len(mobs.keys()):
+                break
+            print(excluded_mobs)
+            await move_by_direction(url, channel, character, step["direction"])
+            await attack_by_names(url, channel, character, mobs.keys(), excluded_mobs)
+
+            i += 1
+        await channel["message"].send("Turning.")
+    await channel["message"].send("Finished.")
+    return
+
+
+async def demons(url, channel, character):
+    steps = [
+        {"direction": "west", "steps": 4},
+                        {"direction": "north", "steps": 1},
+                {"direction": "west", "steps": 2},
+                                {"direction": "north", "steps": 2},
+                {"direction": "west", "steps": 1},
+                {"direction": "north", "steps": 12},
+        {"direction": "east", "steps": 1},
+                {"direction": "south", "steps": 12},
+        {"direction": "east", "steps": 1},
+                {"direction": "north", "steps": 12},
+        
+        {"direction": "west", "steps": 1},
+                {"direction": "south", "steps": 2},
+
+                {"direction": "east", "steps": 2},
+    ]
+
+    mobs = {
+        "Imprisoned Demon": "None"
+    }
+    excluded_mobs = []
+    
+
+
+    
+        
+
+    
+    await room_teleport(url, channel, character, "10")
+    for step in steps:
+        i = 0 
+        while i < step["steps"]:
+            await move_by_direction(url, channel, character, step["direction"])
+            await attack_by_names(url, channel, character, mobs.keys(), excluded_mobs)
+
+            i += 1
+        await channel["message"].send("Turning.")
+    await channel["message"].send("Finished.")
+    return
+
+async def truth(url, channel, character):
+    steps = [
+        {"direction": "west", "steps": 2},
+        {"direction": "north", "steps": 15},
+        {"direction": "east", "steps": 7},
+        {"direction": "west", "steps": 14},
+        {"direction": "south", "steps": 14},
+        {"direction": "east", "steps": 1},
+                {"direction": "north", "steps": 14},
+        {"direction": "east", "steps": 1},
+                {"direction": "south", "steps": 14},
+        {"direction": "east", "steps": 1},
+                {"direction": "north", "steps": 14},
+        {"direction": "east", "steps": 1},
+                {"direction": "south", "steps": 14},
+
+        {"direction": "east", "steps": 1},
+                {"direction": "north", "steps": 14},
+        {"direction": "east", "steps": 1},
+                {"direction": "south", "steps": 14},
+        #midpoint
+        {"direction": "east", "steps": 2},
+                {"direction": "north", "steps": 14},
+        {"direction": "east", "steps": 1},
+                {"direction": "south", "steps": 14},
+        {"direction": "east", "steps": 1},
+                {"direction": "north", "steps": 14},
+
+        {"direction": "east", "steps": 1},
+                {"direction": "south", "steps": 14},
+        {"direction": "east", "steps": 1},
+                {"direction": "north", "steps": 14},
+    ]
+
+    mobs = {
+        "Initiate of Truth": "Orb of Truth"
+    }
+    excluded_mobs = []
+    
+
+
+    
+        
+
+    
+    await room_teleport(url, channel, character, "10")
+    for step in steps:
+        i = 0 
+        while i < step["steps"]:
+            orbs = {
+                "Orb of Truth": 0,
             }
             orb_contents = await get_contents(url, channel, character, "orb")
             for orb in orb_contents:
@@ -110,6 +224,9 @@ async def orbs2(url, channel, character):
                 {"direction": "south", "steps": 14},
         {"direction": "east", "steps": 1},
                 {"direction": "north", "steps": 14},
+        {"direction": "east", "steps": 1},
+                {"direction": "south", "steps": 14},
+                {"direction": "west", "steps": 14},
     ]
 
     mobs = {
@@ -147,12 +264,10 @@ async def orbs2(url, channel, character):
             for orb in orb_contents:
                 if orb in orbs.keys():
                     orbs[orb] += 1
-            print(orbs)
             for mob in mobs.keys():
                 if orbs[mobs[mob]] >= 3:
                     if mob not in excluded_mobs:
                         excluded_mobs.append(mob)
-            print(excluded_mobs)
             await move_by_direction(url, channel, character, step["direction"])
             await attack_by_names(url, channel, character, mobs.keys(), excluded_mobs)
 
