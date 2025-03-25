@@ -15,14 +15,17 @@ async def attack_by_names(url, channel, character, mob_names=[], excluded=[]):
                 final_names.append(name)
             
         mob_name_string = ', '.join(final_names).lower()
+        found_items = []
         for mob in mobs_in_room:
             if mob["name"]:
                 if mob["name"].lower() in mob_name_string:
                     found = await attack(url, channel, character, mob)
                     if found:
-                        await channel["message"].reply(f"Found {found}.")
+                        await channel["message"].reply(f"{character["character_name"]} found {found}.")
+                        found_items.append(found)
             else:
                 pass
+        return found_items
     except Exception as e:
         print(e)
         if "message" in channel:
@@ -30,10 +33,13 @@ async def attack_by_names(url, channel, character, mob_names=[], excluded=[]):
 
 async def attack(url, channel, character, mob):
     try:
+
         data = await get_attack_data(url, channel, character, mob)
+
         new_results = []
         #This is the attack page
         attack_data = requests.get(f'{url}somethingelse.php?serverid={character['server_id']}&suid={character['character_id']}&rg_sess_id={character['session']['session']}&{data}').text
+
         if "Found" in attack_data:
             found_item = attack_data.split('Found ')[1].split('</b>')[0]
             #new_results.append(f"{found_item}")
@@ -51,10 +57,10 @@ async def attack(url, channel, character, mob):
         #await channel["message"].reply(f"Attacking {mob["name"]}.")
         
         if won == '1':
-            pass
+            print(f"{character["character_name"]} won against {mob["name"]}")
             #await channel["message"].reply(f"Won against {mob["name"]}. \nResults: {', '.join(new_results[1:])}")
         else:
-            await channel["message"].reply(f"Failed to defeat {mob["name"]}.")
+            await channel["message"].reply(f"{character["character_name"]} failed to defeat {mob["name"]}.")
     except Exception as e:
         print(e)
         if "message" in channel:

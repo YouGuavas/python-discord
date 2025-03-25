@@ -20,4 +20,7 @@ async def get_chars(url, channel, character):
             trustee_chars.append({"suid": suid, "name": name})
     return [main_chars, trustee_chars]
 
+async def get_userstats(url, channel, character):
+    userstats = requests.get(f"{url}userstats.php?suid={character["character_id"]}&serverid={character["server_id"]}&rg_sess_id={character["session"]["session"]}").json()
+    return userstats
 

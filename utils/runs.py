@@ -45,6 +45,17 @@ async def orbs(url, channel, character):
         "Descendant of Will": "Orb of Will",
     }
     excluded_mobs = []
+
+    orbs = {
+                "Orb of Slight": 0,
+                "Orb of Inner Strength": 0,
+                "Orb of Destiny": 0,
+                "Orb of Will": 0
+            }
+    orb_contents = await get_contents(url, channel, character, "orb")
+    for orb in orb_contents:
+                if orb in orbs.keys():
+                    orbs[orb] += 1
     
 
 
@@ -55,25 +66,17 @@ async def orbs(url, channel, character):
     for step in steps:
         i = 0 
         while i < step["steps"]:
-            orbs = {
-                "Orb of Slight": 0,
-                "Orb of Inner Strength": 0,
-                "Orb of Destiny": 0,
-                "Orb of Will": 0
-            }
-            orb_contents = await get_contents(url, channel, character, "orb")
-            for orb in orb_contents:
-                if orb in orbs.keys():
-                    orbs[orb] += 1
             for mob in mobs.keys():
                 if orbs[mobs[mob]] >= 3:
                     if mob not in excluded_mobs:
                         excluded_mobs.append(mob)
+
             if len(excluded_mobs) == len(mobs.keys()):
                 break
-            print(excluded_mobs)
             await move_by_direction(url, channel, character, step["direction"])
-            await attack_by_names(url, channel, character, mobs.keys(), excluded_mobs)
+            found_items = await attack_by_names(url, channel, character, mobs.keys(), excluded_mobs)
+            for item in found_items:
+                orbs[item] += 1
 
             i += 1
         await channel["message"].send("Turning.")
@@ -160,36 +163,41 @@ async def truth(url, channel, character):
     mobs = {
         "Initiate of Truth": "Orb of Truth"
     }
-    excluded_mobs = []
+    excluded_mobs = []    
+    orbs = {"Orb of Truth": 0}
     
-
-
-    
+    orb_contents = await get_contents(url, channel, character, "orb")
+    for orb in orb_contents:
+        if orb in orbs.keys():
+            orbs[orb] += 1
         
-
-    
     await room_teleport(url, channel, character, "10")
+    
     for step in steps:
+        if len(excluded_mobs) == len(mobs.keys()):
+                await room_teleport(url, channel, character, "10")
+                await channel["message"].send(f"Finished on {character["character_id"]}.")
+                return
+
         i = 0 
         while i < step["steps"]:
-            orbs = {
-                "Orb of Truth": 0,
-            }
-            orb_contents = await get_contents(url, channel, character, "orb")
-            for orb in orb_contents:
-                if orb in orbs.keys():
-                    orbs[orb] += 1
+            
             for mob in mobs.keys():
                 if orbs[mobs[mob]] >= 3:
                     if mob not in excluded_mobs:
                         excluded_mobs.append(mob)
-            print(excluded_mobs)
+            
+                
             await move_by_direction(url, channel, character, step["direction"])
-            await attack_by_names(url, channel, character, mobs.keys(), excluded_mobs)
+            found_items = await attack_by_names(url, channel, character, mobs.keys(), excluded_mobs)
+            for item in found_items:
+                orbs[item] += 1
 
             i += 1
+
         await channel["message"].send("Turning.")
-    await channel["message"].send("Finished.")
+
+    await channel["message"].send(f"Finished on {character["character_id"]}.")
     return
 
 
@@ -239,6 +247,21 @@ async def orbs2(url, channel, character):
                 "Patron of the Order": "Orb of the Order",
 
     }
+
+    orbs = {
+                "Orb of Focus": 0,
+                "Orb of the Gathering": 0,
+                "Orb of the Elements": 0,
+                "Orb of Malice": 0,
+                                "Orb of Melee": 0,
+                                                "Orb of the Order": 0
+
+
+            }
+    orb_contents = await get_contents(url, channel, character, "orb")
+    for orb in orb_contents:
+        if orb in orbs.keys():
+            orbs[orb] += 1
     excluded_mobs = []
     
 
@@ -250,26 +273,15 @@ async def orbs2(url, channel, character):
     for step in steps:
         i = 0 
         while i < step["steps"]:
-            orbs = {
-                "Orb of Focus": 0,
-                "Orb of the Gathering": 0,
-                "Orb of the Elements": 0,
-                "Orb of Malice": 0,
-                                "Orb of Melee": 0,
-                                                "Orb of the Order": 0
-
-
-            }
-            orb_contents = await get_contents(url, channel, character, "orb")
-            for orb in orb_contents:
-                if orb in orbs.keys():
-                    orbs[orb] += 1
+            
             for mob in mobs.keys():
                 if orbs[mobs[mob]] >= 3:
                     if mob not in excluded_mobs:
                         excluded_mobs.append(mob)
             await move_by_direction(url, channel, character, step["direction"])
-            await attack_by_names(url, channel, character, mobs.keys(), excluded_mobs)
+            found_items = await attack_by_names(url, channel, character, mobs.keys(), excluded_mobs)
+            for item in found_items:
+                orbs[item] += 1
 
             i += 1
         await channel["message"].send("Turning.")
@@ -368,3 +380,83 @@ async def astral2(self, url, channel, character, mobs):
         await attack_by_names(url, channel, character, mobs)
 
     await channel["message"].send("Finished.")  
+
+
+
+
+
+async def conjurers(url, channel, character):
+        steps = [
+                {"direction": "west", "steps": 4},
+                {"direction": "north", "steps": 6},
+                {"direction": "south", "steps": 6},
+
+                {"direction": "east", "steps": 1},
+                {"direction": "south", "steps": 3},
+                {"direction": "west", "steps": 1},
+                        {"direction": "south", "steps": 4},
+                {"direction": "north", "steps": 4},
+
+                        {"direction": "east", "steps": 8},
+                {"direction": "north", "steps": 12},
+
+                        {"direction": "south", "steps": 2},
+                {"direction": "west", "steps": 3},
+                        {"direction": "south", "steps": 7},
+        ]
+
+        mobs = ["Arcane Conjurer", "Kinetic Conjurer", "Shadow Conjurer", "Holy Conjurer", "Fire Conjurer"]
+                
+        
+        excluded_mobs = []
+
+        await room_teleport(url, channel, character, "91")
+        for step in steps:
+                i = 0 
+                while i < step["steps"]:                
+                        if len(excluded_mobs) == len(mobs):
+                                break
+                        await move_by_direction(url, channel, character, step["direction"])
+                        await attack_by_names(url, channel, character, mobs, excluded_mobs)
+                        i += 1
+                await channel["message"].send("Turning.")
+        await channel["message"].send("Finished.")
+        return
+
+async def crusaders(url, channel, character):
+        steps = [
+                {"direction": "west", "steps": 4},
+                {"direction": "north", "steps": 6},
+                {"direction": "south", "steps": 6},
+
+                {"direction": "east", "steps": 1},
+                {"direction": "south", "steps": 3},
+                {"direction": "west", "steps": 1},
+                        {"direction": "south", "steps": 4},
+                {"direction": "north", "steps": 4},
+
+                        {"direction": "east", "steps": 8},
+                {"direction": "north", "steps": 12},
+
+                        {"direction": "south", "steps": 2},
+                {"direction": "west", "steps": 3},
+                        {"direction": "south", "steps": 7},
+        ]
+
+        mobs = ["Arcane Crusader", "Kinetic Crusader", "Shadow Crusader", "Holy Crusader", "Fire Crusader"]
+                
+        
+        excluded_mobs = []
+
+        await room_teleport(url, channel, character, "91")
+        for step in steps:
+                i = 0 
+                while i < step["steps"]:                
+                        if len(excluded_mobs) == len(mobs):
+                                break
+                        await move_by_direction(url, channel, character, step["direction"])
+                        await attack_by_names(url, channel, character, mobs, excluded_mobs)
+                        i += 1
+                await channel["message"].send("Turning.")
+        await channel["message"].send("Finished.")
+        return

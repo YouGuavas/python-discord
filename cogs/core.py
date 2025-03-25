@@ -2,12 +2,12 @@ import asyncio
 import sys
 
 from inventory.backpack import get_contents
-from characters.getting import get_chars
+from characters.getting import get_chars, get_userstats
 from questing.questing import get_requirements
 from utils.login import login, logout 
 from utils.moving import move_by_direction, a_star_search, move_to_room
 from utils.attacking import attack_by_names, spam_attack
-from utils.runs import alsayic, astral, holy, orbs, orbs2, demons, truth
+from utils.runs import alsayic, astral, holy, orbs, orbs2, demons, truth, conjurers, crusaders 
 from utils.setting import create_tables
 from utils.getting import list_tables, list_rooms, room_data, list_mobs, get_mob_data, get_room_data
 from utils.skills import underling_buff, get_skill_info, cast_skill
@@ -15,12 +15,14 @@ from discord.ext import commands
 
 if len(sys.argv) > 1:
     if sys.argv[1] == '2':
-        from config import OW_USERNAME_2 as OW_USERNAME, OW_PASSWORD_2 as OW_PASSWORD
+        from config import OW_USERNAME_2 as OW_USERNAME, OW_PASSWORD_2 as OW_PASSWORD, SERVER
+    elif sys.argv[1] == '3':
+        from config import OW_USERNAME_3 as OW_USERNAME, OW_PASSWORD_3 as OW_PASSWORD, SERVER
     else:
-        from config import OW_USERNAME, OW_PASSWORD
+        from config import OW_USERNAME, OW_PASSWORD, SERVER
+
 else:
-    from config import OW_USERNAME, OW_PASSWORD
-SERVER = "sigil"
+    from config import OW_USERNAME, OW_PASSWORD, SERVER
 
 if SERVER == "torax":
     SERVERID = 2
@@ -43,8 +45,7 @@ class Main(commands.Cog):
     @commands.command()
     async def login(self, ctx):
         await login(BASE, OW_USERNAME, OW_PASSWORD, {"message": ctx}, {"session": self.rg_sess, "server_id": SERVERID}, login)
-
-
+        await self.bot.add_cog(Characters(self))
         await self.bot.add_cog(Inventory(self))
         await self.bot.add_cog(Moving(self))
         await self.bot.add_cog(Skilling(self))
@@ -55,10 +56,8 @@ class Main(commands.Cog):
         self.trustees = chars[1]
         self.chars = self.mains + self.trustees
         character_id = self.mains[0]["suid"]
-
         for character in self.mains:
             names.append(character["name"])
-
         #current_room = await(get_room_data(BASE, {"message": ctx}, {"session": self.rg_sess, "server_id": SERVERID, "character_id": character_id}))
         #current_room = current_room["data"]["current_room"]
         await ctx.send(f"Loaded up rga {OW_USERNAME}.")
@@ -66,28 +65,15 @@ class Main(commands.Cog):
         #await ctx.send(f"{self.mains[0]["name"]} current room: {current_room}")
         await ctx.send(f"Play link: {BASE}home.php?serverid={SERVERID}&rg_sess_id={self.rg_sess["session"]}&suid={character_id}")
 
-
     @commands.command()
     async def logout(self, ctx):
         await logout(BASE, {"message": ctx}, {"session": self.rg_sess, "server_id": SERVERID, "character_id": self.mains[0]})
         self.rg_sess = {}
 
-
     @commands.command()
     #Ping
     async def ping(self, ctx):
         await ctx.send("Pong!")
-
-    @commands.command()
-    async def select(self, ctx, *names):
-        new_chars = []
-        for name in names:
-            for char in self.chars:
-                if char["name"].lower() == name.lower():
-
-                    new_chars.append(char)
-        self.chars = new_chars
-        await ctx.send(f"Successfully selected {', '.join(names)}. Ready to move.")
 
     @commands.command()
     #Create Tables
@@ -130,8 +116,44 @@ class Main(commands.Cog):
         await get_mob_data({"message": ctx}, name, True)
     
 
+class Characters(commands.Cog):
+    def __init__(self, bot): 
+        self.bot = bot
+
+    @commands.command()
+    async def select(self, ctx, *names):
+        '''Pre-selects [names] to be used as defaults in other commands.'''
+        new_chars = []
+        for name in names:
+            for char in self.bot.chars:
+                if char["name"].lower() == name.lower():
+
+                    new_chars.append(char)
+        self.bot.chars = new_chars
+        await ctx.send(f"Successfully selected {', '.join(names)}. Ready to move.")
+
+    @commands.command()
+    async def getstats(self, ctx, *names):
+        '''Gets Rage and Experience stats on [names]'''
+        msg_lines = []
+        for name in names:
+            for char in self.bot.chars:
+                if char["name"].lower() == name.lower():
+                    stats = await get_userstats(BASE, {"message": ctx}, {"character_id": char["suid"], "server_id": SERVERID, "session": self.bot.rg_sess})
+                    #returns rage, exp, level
+                    msg_lines.append(f"Stats for {char["name"]}:")
+                    msg_lines.append(f"Rage: {stats["rage"]}")
+                    msg_lines.append(f"Experience: {stats["exp"]}")
+        for line in msg_lines:
+            await ctx.send(f"{line}")
+                    
+
+
+
+
+
 class Inventory(commands.Cog):
-    def __init__(self, bot): #fix this - character_id
+    def __init__(self, bot): 
         self.bot = bot
         
     @commands.command()
@@ -142,6 +164,7 @@ class Inventory(commands.Cog):
             return
         for item in contents:
             print(item)
+
     @commands.command()
     async def get_orbs(self, ctx):
         contents = await get_contents(BASE, {"message": ctx}, {"character_id": self.bot.chars[0], "server_id": SERVERID, "session": self.bot.rg_sess}, "orb")
@@ -155,6 +178,8 @@ class Inventory(commands.Cog):
         
 
         
+
+
 class Moving(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -191,8 +216,9 @@ class Moving(commands.Cog):
                 await move_by_direction(BASE, {"message": ctx}, {"character_id": char["suid"], "server_id": SERVERID, "session": self.bot.rg_sess}, direction="east")
                 i += 1
     
-    @commands.command()
+    @commands.command() #convert this to use *names
     async def west(self, ctx, steps=1, chars=[]):
+        '''moves [steps] westward on [characters]'''        
         if len(chars) < 1:
             chars = self.bot.chars
         for char in chars:
@@ -244,37 +270,70 @@ class Moving(commands.Cog):
 
     @commands.command()
     async def astral(self, ctx):
+        tasks = []
         for char in self.bot.chars:
-            await astral(BASE, {"message": ctx}, {"character_id": char["suid"], "server_id": SERVERID, "session": self.bot.rg_sess}, ["Astral Servant"])
-    @commands.command()
-    async def holy(self, ctx):
-        await holy(BASE, {"message": ctx}, {"character_id": self.bot.chars[0]["suid"], "server_id": SERVERID, "session": self.bot.rg_sess}, ["Holy Headhunter" "Holy Elder" "Holy Skelemech" "Holy Exterminator" "Holy Potionmaster"])
+            task = asyncio.create_task(astral(BASE, {"message": ctx}, {"character_id": char["suid"], "server_id": SERVERID, "session": self.bot.rg_sess}, ["Astral Servant"]))
+            tasks.append(task)
+        for task in tasks:
+            await task
 
     @commands.command()
-    async def alsayic(self, ctx):
-        for char in self.bot.chars:
-            await alsayic(BASE, {"message": ctx}, {"character_id": char["suid"], "server_id": SERVERID, "session": self.bot.rg_sess}, ["Keeper of the Alsayic Rune"])
-    @commands.command()
     async def truth(self, ctx):
+        tasks = []
         for char in self.bot.chars:
-            await truth(BASE, {"message": ctx}, {"character_id": char["suid"], "server_id": SERVERID, "session": self.bot.rg_sess})
+            task = asyncio.create_task(truth(BASE, {"message": ctx}, {"character_id": char["suid"], "server_id": SERVERID, "session": self.bot.rg_sess}))
+            tasks.append(task)
+        for task in tasks:
+            await task
 
     @commands.command()
     async def orbs(self, ctx):
         tasks = []
         for char in self.bot.chars:
-            task = asyncio.create_task(orbs(BASE, {"message": ctx}, {"character_id": char["suid"], "server_id": SERVERID, "session": self.bot.rg_sess}))
+            task = asyncio.create_task(orbs(BASE, {"message": ctx}, {"character_id": char["suid"], "character_name": char["name"], "server_id": SERVERID, "session": self.bot.rg_sess}))
             tasks.append(task)
         for task in tasks:
             await task
     @commands.command()
+    async def conjurers(self, ctx, count):
+        tasks = []
+        i = 0
+        while i < int(count):
+            for char in self.bot.chars:
+                task = asyncio.create_task(conjurers(BASE, {"message": ctx}, {"character_id": char["suid"], "character_name": char["name"], "server_id": SERVERID, "session": self.bot.rg_sess}))
+                tasks.append(task)
+            for task in tasks:
+                await task
+            i += 1
+            await asyncio.sleep(30)
+    @commands.command()
+    async def crusaders(self, ctx, count):
+        tasks = []
+        i = 0
+        while i < int(count):
+            for char in self.bot.chars:
+                task = asyncio.create_task(crusaders(BASE, {"message": ctx}, {"character_id": char["suid"], "character_name": char["name"], "server_id": SERVERID, "session": self.bot.rg_sess}))
+                tasks.append(task)
+            for task in tasks:
+                await task
+            i += 1
+            await asyncio.sleep(30)
+    @commands.command()
     async def demons(self, ctx):
+        tasks = []
         for char in self.bot.chars:
-            await demons(BASE, {"message": ctx}, {"character_id": char["suid"], "server_id": SERVERID, "session": self.bot.rg_sess})
+            task = asyncio.create_task(demons(BASE, {"message": ctx}, {"character_id": char["suid"], "server_id": SERVERID, "session": self.bot.rg_sess}))
+            tasks.append(task)
+        for task in tasks:
+            await task
+
     @commands.command()
     async def orbs2(self, ctx):
         for char in self.bot.chars:
             await orbs2(BASE, {"message": ctx}, {"character_id": char["suid"], "server_id": SERVERID, "session": self.bot.rg_sess})
+
+
+
 
 class Questing(commands.Cog):
     def __init__(self, bot): #fix this - character_id
@@ -283,6 +342,9 @@ class Questing(commands.Cog):
     async def quest(self, ctx, quest_name="The Astral Guardian"):
         for char in self.bot.chars:
             await get_requirements(BASE, {"character_id": char["suid"], "server_id": SERVERID, "session": self.bot.rg_sess}, quest_name)
+
+
+
 
 class Skilling(commands.Cog):
     def __init__(self, bot):
@@ -298,10 +360,35 @@ class Skilling(commands.Cog):
         for char in self.bot.chars:
             await get_skill_info(BASE, {"message": ctx}, {"character_id": char["suid"], "server_id": SERVERID, "session": self.bot.rg_sess}, skill_name)
     @commands.command()
-    async def cast(self, ctx, skill_name):
+    async def cast(self, ctx, *skill_names):
         print("casting...")
         for char in self.bot.chars:
-            await cast_skill(BASE, {"message": ctx}, {"character_id": char["suid"], "server_id": SERVERID, "session": self.bot.rg_sess}, skill_name)
+            for skill in skill_names:
+                await cast_skill(BASE, {"message": ctx}, {"character_id": char["suid"], "server_id": SERVERID, "session": self.bot.rg_sess}, skill)
+    @commands.command()
+    async def fullskills(self, ctx):
+        skill_names = [
+            "circumspect",
+            "stealth",
+            "vitx",
+            "fortify",
+            "boost",
+            "haste",
+            "swiftness",
+            "circumspect",
+            "looting",
+            "mfer",
+            "mpres",
+            "shieldwall",
+            "bloodlust",
+            "stoneskin",
+            "empower",
+            "protection"
+        ]
+        print("casting...")
+        for char in self.bot.chars:
+            for skill in skill_names:
+                await cast_skill(BASE, {"message": ctx}, {"character_id": char["suid"], "server_id": SERVERID, "session": self.bot.rg_sess}, skill)
 
 # Use an async function to properly load the cog
 async def setup(bot):

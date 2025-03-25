@@ -73,7 +73,7 @@ async def get_requirements(url, character, name : str):
                 if "killed" in requirement:
 
                     branch_point = requirement.split(": </b>")
-                    print(branch_point)
+                    print(f"1: {branch_point}")
                     requirement_name = branch_point[0].split("<b>")[-1].split("</a>")[0]
                     requirement_count = int(branch_point[1].split("/")[0].replace(',', ''))
                     requirement_max = int(branch_point[1].split(" ")[0].split("/")[-1].replace(',', ''))
@@ -81,7 +81,7 @@ async def get_requirements(url, character, name : str):
                 elif ": </b>" in requirement:
 
                     branch_point = requirement.split(": </b>")
-                    print(branch_point)
+                    print(f"2: {branch_point}")
 
                     requirement_name = branch_point[0].split("<b>")[-1].split("</a>")[0]
                     requirement_count = int(branch_point[1].split("/")[0].replace(',', ''))
@@ -89,7 +89,7 @@ async def get_requirements(url, character, name : str):
                     requirement_type = "pvp"
                 elif ":</b> " in requirement:
                     branch_point = requirement.split(":</b> ")
-                    print(branch_point)
+                    print(f"3: {branch_point}")
 
                     requirement_name = branch_point[0].split("<b>")[-1].split("</a>")[0]
                     requirement_count = int(branch_point[1].split("/")[0].replace(',', ''))
@@ -98,7 +98,7 @@ async def get_requirements(url, character, name : str):
                 elif "Stripped" in requirement:
 
                     branch_point = requirement.split(": </b>")
-                    print(branch_point)
+                    print(f"4: {branch_point}")
 
                     requirement_name = branch_point[0].split("<b>")[-1].split("</a>")[0]
                     requirement_count = int(branch_point[1].split("/")[0].replace(',', ''))
@@ -107,17 +107,23 @@ async def get_requirements(url, character, name : str):
                 elif "Return" in requirement:
 
                     branch_point = requirement.split("</b>")
-                    print(branch_point)
+                    print(f"5: {branch_point}")
 
                     requirement_name = branch_point[0].split("</a>")[0].split("Return to ")[1]
                     requirement_type = "speak"
                 else:
-                    branch_point = requirement.split(":</b> ")
-                    print(branch_point)
+                    branch_point = requirement.split("</font>")
+                    print(f"6: {branch_point[0]}")
 
                     requirement_name = branch_point[0].split("</a>")[0]
+                    print(f"1: {requirement_name}")
+
                     requirement_count = int(branch_point[1].split("/")[0].replace(',', ''))
+                    print(f"2: count")
+
                     requirement_max = int(branch_point[1].split("</a>")[0].split("/")[-1].replace(',', ''))
+                    print(f"3: max")
+
 
                     requirement_type = "unknown"
                 requirement = {"name": requirement_name, "count": requirement_count, "max": requirement_max, "type": requirement_type}
@@ -126,5 +132,5 @@ async def get_requirements(url, character, name : str):
             #if not "div align" in quest_id:
             quest_name = quest.split("</svg> ")[2].split("</span")[0]
             quest = {"name": quest_name, "id": quest_id, "requirements": requirements}
-            print(quest)
+            print(f"quest: {quest}")
 
